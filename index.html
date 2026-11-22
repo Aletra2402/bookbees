@@ -271,7 +271,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       </label>
       <button class="btn btn-primary" type="submit" style="align-self:end">Einloggen</button>
     </form>
-    <p class="msg err" id="loginMsg"></p>
+    <p class="msg" id="loginMsg"></p>
   </section>
 
   <div id="appView" hidden style="display:grid;gap:20px">
@@ -573,6 +573,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     $('nav').hidden = true;
     $('loginView').hidden = false;
     $('loginMsg').textContent = msg || '';
+    $('loginMsg').className = 'msg err';
     $('pw').focus();
   }
 
@@ -970,6 +971,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   $('loginForm').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var p = $('pw').value;
+    $('loginMsg').className = 'msg';
     $('loginMsg').textContent = 'Einen Moment …';
     call('login', null, p).then(function (info) {
       pw = p; store(KEY, p); showApp(info);
