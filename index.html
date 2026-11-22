@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<base target="_top">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bookbee's</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap">
 <style>
-/* Layout: honigfarbenes Waben-Band oben, darunter eine schmale Spalte mit zwei Karten (Anmelden, Buch verschicken) */
+/* Layout: honigfarbenes Waben-Band mit Menü oben, darunter eine schmale Spalte mit Karten je Bereich */
 :root {
   --bg: #fbfaf6;
   --surface: #ffffff;
@@ -55,12 +54,13 @@ body {
   color: var(--on-honey);
 }
 .band-inner, main {
-  max-width: 640px;
+  max-width: 680px;
   margin: 0 auto;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.band-inner { padding-block: 36px 30px; display: flex; align-items: center; gap: 16px; }
+.band-inner { padding-block: 28px 16px; display: grid; gap: 18px; }
+.brand { display: flex; align-items: center; gap: 16px; }
 .logo { width: 52px; height: 52px; flex: none; }
 h1 {
   font: 800 clamp(30px, 7vw, 42px)/1 var(--display);
@@ -68,7 +68,22 @@ h1 {
   margin: 0;
 }
 .tag { margin: 4px 0 0; font-weight: 500; opacity: .8; }
-main { padding-block: 28px 56px; display: grid; gap: 20px; }
+nav.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 -4px; padding: 0 4px 2px; }
+nav.tabs::-webkit-scrollbar { display: none; }
+nav.tabs a {
+  flex: none;
+  font: 600 14px/1 var(--body);
+  color: var(--on-honey);
+  text-decoration: none;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .08);
+  white-space: nowrap;
+}
+nav.tabs a:hover { background: rgba(0, 0, 0, .14); }
+nav.tabs a[aria-current=page] { background: var(--on-honey); color: #f2b416; }
+main { padding-block: 24px 56px; display: grid; gap: 20px; }
+.view { display: grid; gap: 20px; }
 .card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -76,11 +91,13 @@ main { padding-block: 28px 56px; display: grid; gap: 20px; }
   padding: 22px;
   display: grid;
   gap: 14px;
+  min-width: 0;
 }
 h2 { font: 700 21px/1.2 var(--display); margin: 0; text-wrap: balance; }
+h3 { font: 700 17px/1.25 var(--display); margin: 0; }
 .hint { color: var(--muted); margin: 0; font-size: 14px; }
 label { font-weight: 600; font-size: 13px; letter-spacing: .02em; display: grid; gap: 6px; }
-input[type=text], input[type=email], input[type=password] {
+input[type=text], input[type=email], input[type=password], input[type=date], input[type=time] {
   font: inherit;
   color: var(--ink);
   background: var(--bg);
@@ -88,14 +105,17 @@ input[type=text], input[type=email], input[type=password] {
   border-radius: 10px;
   padding: 11px 12px;
   width: 100%;
+  min-width: 0;
 }
 input:focus-visible, button:focus-visible, a:focus-visible {
   outline: 3px solid var(--honey);
   outline-offset: 2px;
 }
 .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .fields { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
-@media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+.fields.even { grid-template-columns: 1fr 1fr; }
+@media (max-width: 520px) { .fields, .fields.even { grid-template-columns: 1fr; } }
 .btn {
   font: 600 15px/1 var(--body);
   border-radius: 10px;
@@ -111,6 +131,7 @@ input:focus-visible, button:focus-visible, a:focus-visible {
 .btn-primary:hover { filter: brightness(.96); }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn-ghost:hover { background: var(--honey-soft); }
+.btn-small { padding: 9px 12px; font-size: 14px; }
 .btn[aria-disabled=true], .btn:disabled { opacity: .45; pointer-events: none; }
 .link { background: none; border: 0; padding: 0; font: inherit; color: var(--honey-deep); font-weight: 600; cursor: pointer; }
 .msg { font-size: 14px; margin: 0; min-height: 1.2em; }
@@ -119,31 +140,29 @@ input:focus-visible, button:focus-visible, a:focus-visible {
 
 .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
-ul.members { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-ul.members li {
+ul.list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+ul.list > li {
   display: flex; align-items: center; gap: 12px;
-  padding: 10px 2px; border-bottom: 1px solid var(--line);
+  padding: 12px 2px; border-bottom: 1px solid var(--line);
 }
 ul.members label { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; font-weight: 400; letter-spacing: 0; cursor: pointer; }
 ul.members input { width: 18px; height: 18px; accent-color: var(--honey-deep); flex: none; }
-.who { min-width: 0; }
-.who b { display: block; font-weight: 600; }
-.who span { display: block; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
-.del { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 6px; border-radius: 6px; }
-.del:hover { color: var(--danger); background: var(--honey-soft); }
-.confirm { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.who, .meta { min-width: 0; flex: 1; }
+.who b, .meta b { display: block; font-weight: 600; overflow-wrap: anywhere; }
+.who span, .meta span { display: block; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.actions { display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; flex: none; }
+@media (max-width: 520px) {
+  ul.list .actions { flex-direction: column; align-items: flex-end; }
+  .current { grid-template-columns: 1fr; justify-items: start; }
+}
+.del { background: none; border: 0; color: var(--muted); cursor: pointer; font: 13px var(--body); padding: 6px 8px; border-radius: 6px; }
+.del:hover { color: var(--ink); background: var(--honey-soft); }
+.del.danger:hover { color: var(--danger); }
+.confirm { display: flex; gap: 6px; align-items: center; font-size: 13px; flex: none; }
 .confirm button { font: 600 13px var(--body); border-radius: 6px; padding: 5px 9px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
 .confirm .yes { background: var(--danger); color: #fff; border-color: var(--danger); }
-.empty { color: var(--muted); padding: 18px 0 4px; margin: 0; }
+.empty { color: var(--muted); padding: 14px 0 4px; margin: 0; }
 
-.tip {
-  background: var(--honey-soft);
-  border-radius: 10px;
-  padding: 12px 14px;
-  font-size: 13.5px;
-  color: var(--ink);
-}
-.tip b { font-weight: 600; }
 .addr {
   font: 13px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
   background: var(--bg); border: 1px dashed var(--line);
@@ -157,11 +176,60 @@ input.file::file-selector-button {
   font: 600 14px var(--body); border: 0; border-radius: 8px; padding: 8px 12px; margin-right: 10px;
   background: var(--honey-soft); color: var(--ink); cursor: pointer;
 }
+
+/* Editor-Formulare */
+form.editor { display: grid; gap: 12px; padding: 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
+.cover-edit { display: flex; gap: 14px; align-items: center; }
+
+/* Buchcover */
+.cover {
+  width: 48px; aspect-ratio: 2 / 3; flex: none;
+  border-radius: 4px; object-fit: cover;
+  background: var(--honey-soft); color: var(--honey-deep);
+  display: grid; place-items: center;
+  font: 800 18px var(--display);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .15);
+}
+.cover.big { width: 104px; font-size: 34px; border-radius: 6px; }
+
+/* Aktuelles Buch */
+.current {
+  display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center;
+  background: var(--honey-soft);
+  border: 2px solid var(--honey);
+  border-radius: 14px;
+  padding: 18px;
+}
+.current .meta b { font: 700 22px/1.2 var(--display); }
+.current .meta span:not(.pill) { font-size: 15px; color: var(--ink); }
+.current .when { margin-top: 8px; font-size: 14px; color: var(--muted); }
+.current .actions { justify-content: flex-start; margin: 8px 0 0 -8px; }
+.meta span.pill, .pill {
+  display: inline-block; margin-bottom: 8px; font-size: 11px;
+  background: var(--honey); color: var(--on-honey);
+  font: 700 11px/1 var(--body); letter-spacing: .08em; text-transform: uppercase;
+  padding: 6px 9px; border-radius: 999px;
+}
+
+/* Termine */
+.dblock {
+  width: 58px; flex: none; text-align: center;
+  border: 1px solid var(--line); border-radius: 10px; padding: 7px 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+.dblock b { display: block; font: 800 22px/1 var(--display); }
+.dblock span { display: block; margin-top: 3px; font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+li.next .dblock { background: var(--honey); border-color: var(--honey); color: var(--on-honey); }
+li.next .dblock span { color: var(--on-honey); }
+details.past summary { cursor: pointer; color: var(--muted); font-size: 14px; font-weight: 600; }
+details.past ul { margin-top: 10px; }
+details.past li { opacity: .75; }
+
 .demo { background: var(--ink); color: var(--bg); text-align: center; font-size: 13px; padding: 6px 16px; }
 .login { max-width: 420px; margin: 0 auto; width: 100%; }
 footer { text-align: center; color: var(--muted); font-size: 13px; padding-bottom: 32px; }
 @media (prefers-reduced-motion: no-preference) {
-  .card { animation: rise .35s ease-out both; }
+  .view:not([hidden]) .card { animation: rise .3s ease-out both; }
   @keyframes rise { from { transform: translateY(6px); } to { transform: none; } }
 }
 </style>
@@ -170,17 +238,25 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
 <div class="demo" id="demo" hidden>Vorschau-Modus: Daten werden nur in diesem Browser gespeichert.</div>
 <header class="band">
   <div class="band-inner">
-    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M32 3 57 17.5v29L32 61 7 46.5v-29z" fill="#1d1a14"/>
-      <ellipse cx="32" cy="36" rx="11" ry="13" fill="#f2b416"/>
-      <path d="M21.5 31h21M21 37h22M22.5 43h19" stroke="#1d1a14" stroke-width="3.2" stroke-linecap="round"/>
-      <ellipse cx="22" cy="21" rx="8" ry="5.5" fill="#fff" fill-opacity=".85" transform="rotate(-25 22 21)"/>
-      <ellipse cx="42" cy="21" rx="8" ry="5.5" fill="#fff" fill-opacity=".85" transform="rotate(25 42 21)"/>
-    </svg>
-    <div>
-      <h1>Bookbee's</h1>
-      <p class="tag">Unser Buchclub. Ein EPUB, alle Kindles.</p>
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M32 3 57 17.5v29L32 61 7 46.5v-29z" fill="#1d1a14"/>
+        <ellipse cx="32" cy="36" rx="11" ry="13" fill="#f2b416"/>
+        <path d="M21.5 31h21M21 37h22M22.5 43h19" stroke="#1d1a14" stroke-width="3.2" stroke-linecap="round"/>
+        <ellipse cx="22" cy="21" rx="8" ry="5.5" fill="#fff" fill-opacity=".85" transform="rotate(-25 22 21)"/>
+        <ellipse cx="42" cy="21" rx="8" ry="5.5" fill="#fff" fill-opacity=".85" transform="rotate(25 42 21)"/>
+      </svg>
+      <div>
+        <h1>Bookbee's</h1>
+        <p class="tag">Unser Buchclub.</p>
+      </div>
     </div>
+    <nav class="tabs" id="nav" aria-label="Bereiche" hidden>
+      <a href="#teilen" data-view="teilen">Buch teilen</a>
+      <a href="#archiv" data-view="archiv">Archiv</a>
+      <a href="#termine" data-view="termine">Termine</a>
+      <a href="#nicht-gelesen" data-view="nicht-gelesen">Nicht gelesen</a>
+    </nav>
   </div>
 </header>
 
@@ -188,7 +264,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   <!-- Login -->
   <section class="card login" id="loginView">
     <h2>Willkommen im Bienenstock</h2>
-    <p class="hint">Gib das Club-Passwort ein, um die Mitgliederliste zu sehen.</p>
+    <p class="hint">Gib das Club-Passwort ein.</p>
     <form id="loginForm" class="row" autocomplete="off">
       <label for="pw" style="flex:1;min-width:200px">Passwort
         <input type="password" id="pw" required autocomplete="current-password">
@@ -198,62 +274,180 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     <p class="msg err" id="loginMsg"></p>
   </section>
 
-  <!-- App -->
   <div id="appView" hidden style="display:grid;gap:20px">
-    <section class="card" aria-labelledby="joinTitle">
-      <h2 id="joinTitle">Ich bin dabei</h2>
-      <p class="hint">Trag deinen Namen und die E-Mail-Adresse deines Kindles ein (endet meist auf @kindle.com, steht bei <a class="link" href="https://www.amazon.de/hz/mycd/digital-console/alldevices?pageType=devices" target="_blank" rel="noopener">Amazon → Geräte</a>). Ist die Adresse schon drin, wird nur der Name aktualisiert.</p>
-      <form id="joinForm" style="display:grid;gap:12px">
-        <div class="fields">
-          <label for="name">Name
-            <input type="text" id="name" required maxlength="80" placeholder="z. B. Anna">
-          </label>
-          <label for="email">Kindle-E-Mail
-            <input type="email" id="email" required maxlength="120" placeholder="anna_123@kindle.com">
-          </label>
+
+    <!-- ============ Buch teilen ============ -->
+    <div class="view" data-view="teilen">
+      <section class="card" aria-labelledby="joinTitle">
+        <h2 id="joinTitle">Ich bin dabei</h2>
+        <p class="hint">Trag deinen Namen und die E-Mail-Adresse deines Kindles ein (endet meist auf @kindle.com, steht bei <a class="link" href="https://www.amazon.de/hz/mycd/digital-console/alldevices?pageType=devices" target="_blank" rel="noopener">Amazon → Geräte</a>). Ist die Adresse schon drin, wird nur der Name aktualisiert.</p>
+        <form id="joinForm" style="display:grid;gap:12px">
+          <div class="fields">
+            <label for="name">Name
+              <input type="text" id="name" required maxlength="80" placeholder="z. B. Anna">
+            </label>
+            <label for="email">Kindle-E-Mail
+              <input type="email" id="email" required maxlength="120" placeholder="anna_123@kindle.com">
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn btn-primary" type="submit" id="joinBtn">Eintragen</button>
+            <p class="msg" id="joinMsg"></p>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="sendTitle">
+        <h2 id="sendTitle">Buch an alle schicken</h2>
+        <div class="toolbar">
+          <div class="row" style="gap:14px">
+            <button class="link" type="button" id="allBtn">Alle auswählen</button>
+            <button class="link" type="button" id="noneBtn">Keine</button>
+          </div>
+          <span class="count" id="count">0 von 0 ausgewählt</span>
+        </div>
+        <ul class="list members" id="memberList"></ul>
+        <p class="empty" id="memberEmpty" hidden>Noch niemand eingetragen. Sei die erste Biene!</p>
+
+        <label for="file">EPUB-Datei
+          <input type="file" id="file" accept=".epub,application/epub+zip" class="file">
+        </label>
+        <div class="row">
+          <button class="btn btn-primary" type="button" id="sendBtn" disabled>Buch senden</button>
+          <span class="count" id="quota"></span>
+        </div>
+        <p class="msg" id="sendMsg"></p>
+      </section>
+
+      <section class="card" aria-labelledby="kindleTitle">
+        <h2 id="kindleTitle">Einmalig: Absender beim Kindle freigeben</h2>
+        <p class="hint">Bücher kommen immer von dieser Adresse. Damit dein Kindle sie annimmt, trag sie einmal bei Amazon ein:</p>
+        <div class="row">
+          <div class="addr" id="sender" style="flex:1;min-width:0">…</div>
+          <button class="btn btn-ghost" type="button" id="copySender">Kopieren</button>
         </div>
         <div class="row">
-          <button class="btn btn-primary" type="submit" id="joinBtn">Eintragen</button>
-          <p class="msg" id="joinMsg"></p>
+          <a class="btn btn-primary" href="https://www.amazon.de/hz/mycd/preferences/myx#/home/settings/payment" target="_blank" rel="noopener">Amazon-Einstellungen öffnen</a>
         </div>
-      </form>
-    </section>
+        <p class="hint">Dort nach unten zu <i>Einstellungen für persönliche Dokumente</i> scrollen, dann <i>Genehmigte E-Mail-Adressen → Neue Adresse hinzufügen</i> und die Adresse oben einfügen.</p>
+        <p class="hint">Deine Kindle-Adresse (für „Ich bin dabei“) findest du unter <a class="link" href="https://www.amazon.de/hz/mycd/digital-console/alldevices?pageType=devices" target="_blank" rel="noopener">Amazon → Geräte</a>: Kindle antippen, dort steht die E-Mail-Adresse.</p>
+      </section>
+    </div>
 
-    <section class="card" aria-labelledby="sendTitle">
-      <h2 id="sendTitle">Buch an alle schicken</h2>
-      <div class="toolbar">
-        <div class="row" style="gap:14px">
-          <button class="link" type="button" id="allBtn">Alle auswählen</button>
-          <button class="link" type="button" id="noneBtn">Keine</button>
+    <!-- ============ Archiv ============ -->
+    <div class="view" data-view="archiv" hidden>
+      <div id="currentBooks" style="display:grid;gap:14px"></div>
+
+      <section class="card" aria-labelledby="archivTitle">
+        <div class="head">
+          <h2 id="archivTitle">Archiv</h2>
+          <button class="btn btn-ghost btn-small" type="button" id="archivNeu">+ Buch eintragen</button>
         </div>
-        <span class="count" id="count">0 von 0 ausgewählt</span>
-      </div>
-      <ul class="members" id="list"></ul>
-      <p class="empty" id="empty" hidden>Noch niemand eingetragen. Sei die erste Biene!</p>
+        <form class="editor" id="archivForm" hidden>
+          <h3 id="archivFormTitle">Buch eintragen</h3>
+          <div class="fields even">
+            <label for="a-titel">Titel
+              <input type="text" id="a-titel" required maxlength="200">
+            </label>
+            <label for="a-autor">Autor:in
+              <input type="text" id="a-autor" maxlength="200">
+            </label>
+          </div>
+          <label for="a-datum">Datum des Buchclubs
+            <input type="date" id="a-datum">
+          </label>
+          <p class="hint" style="margin-top:-4px">Liegt das Datum in der Zukunft, steht das Buch oben als „Wir lesen gerade“. Danach rutscht es automatisch ins Archiv.</p>
+          <div class="cover-edit">
+            <div id="a-preview"></div>
+            <div style="display:grid;gap:8px;flex:1;min-width:0">
+              <label for="a-bild">Cover
+                <input type="file" id="a-bild" accept="image/*" class="file">
+              </label>
+              <button class="link" type="button" id="a-bild-weg" hidden style="justify-self:start">Cover entfernen</button>
+            </div>
+          </div>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">Speichern</button>
+            <button class="btn btn-ghost" type="button" data-cancel>Abbrechen</button>
+            <p class="msg" data-msg></p>
+          </div>
+        </form>
+        <span class="count" id="archivCount"></span>
+        <ul class="list" id="archivList"></ul>
+        <p class="empty" id="archivEmpty" hidden>Noch keine Bücher im Archiv. Trag das erste ein!</p>
+      </section>
+    </div>
 
-      <label for="file">EPUB-Datei
-        <input type="file" id="file" accept=".epub,application/epub+zip" class="file">
-      </label>
-      <div class="row">
-        <button class="btn btn-primary" type="button" id="sendBtn" disabled>Buch senden</button>
-        <span class="count" id="quota"></span>
-      </div>
-      <p class="msg" id="sendMsg"></p>
-    </section>
+    <!-- ============ Termine ============ -->
+    <div class="view" data-view="termine" hidden>
+      <section class="card" aria-labelledby="termineTitle">
+        <div class="head">
+          <h2 id="termineTitle">Nächste Termine</h2>
+          <button class="btn btn-ghost btn-small" type="button" id="termineNeu">+ Termin eintragen</button>
+        </div>
+        <form class="editor" id="termineForm" hidden>
+          <h3 id="termineFormTitle">Termin eintragen</h3>
+          <div class="fields even">
+            <label for="t-datum">Datum
+              <input type="date" id="t-datum" required>
+            </label>
+            <label for="t-uhrzeit">Uhrzeit
+              <input type="time" id="t-uhrzeit">
+            </label>
+          </div>
+          <div class="fields even">
+            <label for="t-host">Wer hostet?
+              <input type="text" id="t-host" maxlength="100" list="hostList" placeholder="Name">
+            </label>
+            <label for="t-notiz">Notiz
+              <input type="text" id="t-notiz" maxlength="300" placeholder="z. B. Ort, wer bringt was mit">
+            </label>
+          </div>
+          <datalist id="hostList"></datalist>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">Speichern</button>
+            <button class="btn btn-ghost" type="button" data-cancel>Abbrechen</button>
+            <p class="msg" data-msg></p>
+          </div>
+        </form>
+        <ul class="list" id="termineList"></ul>
+        <p class="empty" id="termineEmpty" hidden>Kein Termin geplant. Wer lädt als Nächstes ein?</p>
+        <details class="past" id="termineAltBox" hidden>
+          <summary id="termineAltTitle">Vergangene Termine</summary>
+          <ul class="list" id="termineAlt"></ul>
+        </details>
+      </section>
+    </div>
 
-    <section class="card" aria-labelledby="kindleTitle">
-      <h2 id="kindleTitle">Einmalig: Absender beim Kindle freigeben</h2>
-      <p class="hint">Bücher kommen immer von dieser Adresse. Damit dein Kindle sie annimmt, trag sie einmal bei Amazon ein:</p>
-      <div class="row">
-        <div class="addr" id="sender" style="flex:1;min-width:0">…</div>
-        <button class="btn btn-ghost" type="button" id="copySender">Kopieren</button>
-      </div>
-      <div class="row">
-        <a class="btn btn-primary" href="https://www.amazon.de/hz/mycd/preferences/myx#/home/settings/payment" target="_blank" rel="noopener">Amazon-Einstellungen öffnen</a>
-      </div>
-      <p class="hint">Dort nach unten zu <i>Einstellungen für persönliche Dokumente</i> scrollen, dann <i>Genehmigte E-Mail-Adressen → Neue Adresse hinzufügen</i> und die Adresse oben einfügen.</p>
-      <p class="hint">Deine Kindle-Adresse (für „Ich bin dabei“) findest du unter <a class="link" href="https://www.amazon.de/hz/mycd/digital-console/alldevices?pageType=devices" target="_blank" rel="noopener">Amazon → Geräte</a>: Kindle antippen, dort steht die E-Mail-Adresse.</p>
-    </section>
+    <!-- ============ Nicht gelesen ============ -->
+    <div class="view" data-view="nicht-gelesen" hidden>
+      <section class="card" aria-labelledby="ngTitle">
+        <div class="head">
+          <h2 id="ngTitle">Nicht gelesen</h2>
+          <button class="btn btn-ghost btn-small" type="button" id="ngNeu">+ Buch eintragen</button>
+        </div>
+        <p class="hint">Bücher, die zur Auswahl standen, aber (noch) nicht gewählt wurden.</p>
+        <form class="editor" id="ngForm" hidden>
+          <h3 id="ngFormTitle">Buch eintragen</h3>
+          <div class="fields even">
+            <label for="n-titel">Titel
+              <input type="text" id="n-titel" required maxlength="200">
+            </label>
+            <label for="n-autor">Autor:in
+              <input type="text" id="n-autor" maxlength="200">
+            </label>
+          </div>
+          <div class="row">
+            <button class="btn btn-primary" type="submit">Speichern</button>
+            <button class="btn btn-ghost" type="button" data-cancel>Abbrechen</button>
+            <p class="msg" data-msg></p>
+          </div>
+        </form>
+        <span class="count" id="ngCount"></span>
+        <ul class="list" id="ngList"></ul>
+        <p class="empty" id="ngEmpty" hidden>Noch nichts eingetragen.</p>
+      </section>
+    </div>
 
     <footer><button class="link" type="button" id="logoutBtn">Ausloggen</button></footer>
   </div>
@@ -261,145 +455,233 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
 
 <script>
 (function () {
-  var KEY = 'bookbees_pw';
   // Adresse der Google-Apps-Script-Schnittstelle (Web-App-URL, endet auf /exec)
   var API = 'https://script.google.com/macros/s/AKfycbyVQTzHpByOqolAxaCDaPaY2JTymz395t3kCWCvqkWdC7EZF9h3ljus7_-TJApe34gC/exec';
-  var IN_APPS_SCRIPT = typeof google !== 'undefined' && !!google.script;
   var DEMO = /[?&]demo\b/.test(location.search);
+  var KEY = 'bookbees_pw';
+  var VIEWS = ['teilen', 'archiv', 'termine', 'nicht-gelesen'];
+
   var pw = '';
-  var members = [];
-  var selected = {};      // email -> true/false
-  var pendingDelete = null;
+  var state = { mitglieder: [], archiv: [], termine: [], nichtgelesen: [] };
+  var selected = {};       // email -> true/false
+  var pending = null;      // Schlüssel des Eintrags, dessen Löschen gerade bestätigt wird
+  var sending = false;
 
   var $ = function (id) { return document.getElementById(id); };
-
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
   function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
   function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 
-  /* ---------- Server-Aufrufe (oder Vorschau-Ersatz) ---------- */
-  function call(fn) {
-    var args = Array.prototype.slice.call(arguments, 1);
-    return new Promise(function (resolve, reject) {
-      if (DEMO) {
-        try { resolve(demoApi[fn].apply(null, args)); } catch (e) { reject(e); }
-        return;
-      }
-      if (IN_APPS_SCRIPT) {
-        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
-        r[fn].apply(r, args);
-        return;
-      }
-      // Eigener Host: per fetch ohne Cookies an die Schnittstelle
-      var body = { aktion: fn, passwort: args[0] };
-      if (fn === 'anmelden') { body.name = args[1]; body.email = args[2]; }
-      if (fn === 'entfernen') { body.email = args[1]; }
-      if (fn === 'buchSenden') { body.emails = args[1]; body.datei = args[2]; }
-      fetch(API, {
-        method: 'POST',
-        credentials: 'omit',
-        redirect: 'follow',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(body)
-      }).then(function (res) { return res.json(); })
-        .then(function (j) { j.ok ? resolve(j.daten) : reject(new Error(j.fehler)); })
-        .catch(function () { reject(new Error('Keine Verbindung zum Server. Bitte nochmal versuchen.')); });
+  /* ---------- Server ---------- */
+  function call(aktion, daten, passwort) {
+    var body = Object.assign({ aktion: aktion, passwort: passwort != null ? passwort : pw }, daten || {});
+    if (DEMO) {
+      return new Promise(function (res, rej) {
+        setTimeout(function () { try { res(demo(body)); } catch (e) { rej(e); } }, 150);
+      });
+    }
+    return fetch(API, {
+      method: 'POST',
+      credentials: 'omit',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); }, function () {
+      throw new Error('Keine Verbindung zum Server. Bitte nochmal versuchen.');
+    }).then(function (j) {
+      if (!j.ok) throw new Error(j.fehler);
+      return j.daten;
     });
   }
 
-  var demoApi = (function () {
-    function get() { try { return JSON.parse(localStorage.getItem('bookbees_demo')) || null; } catch (e) { return null; } }
-    function put(l) { try { localStorage.setItem('bookbees_demo', JSON.stringify(l)); } catch (e) {} }
-    var mem = get() || [
-      { name: 'Beispiel: Anna', email: 'anna_beispiel@kindle.com' },
-      { name: 'Beispiel: Ben', email: 'ben.beispiel@kindle.com' }
-    ];
-    function check(p) { if (String(p).trim().toLowerCase() !== 'bookbees2026') throw new Error('Falsches Passwort.'); }
-    function sorted() { return mem.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'de'); }); }
-    return {
-      login: function (p) { check(p); return { mitglieder: sorted(), absender: 'bookbees.beispiel@gmail.com', kontingent: 100 }; },
-      buchSenden: function (p, emails, d) {
-        check(p);
-        if (!d || !/\.epub$/i.test(d.name)) throw new Error('Bitte eine .epub-Datei wählen.');
-        return { gesendet: emails.length, fehler: [], kontingent: 100 - emails.length };
-      },
-      anmelden: function (p, n, e) {
-        check(p); e = e.trim().toLowerCase();
-        var f = mem.filter(function (m) { return m.email === e; })[0];
-        if (f) f.name = n.trim(); else mem.push({ name: n.trim(), email: e });
-        put(mem); return sorted();
-      },
-      entfernen: function (p, e) { check(p); mem = mem.filter(function (m) { return m.email !== e; }); put(mem); return sorted(); }
+  // Vorschau-Modus (?demo): alles im Browser
+  function demo(b) {
+    var d;
+    try { d = JSON.parse(localStorage.getItem('bookbees_demo2')); } catch (e) {}
+    d = d || {
+      mitglieder: [{ name: 'Beispiel: Anna', email: 'anna_beispiel@kindle.com' }],
+      archiv: [
+        { id: 'a1', titel: 'Beispiel: Die Mitternachtsbibliothek', autor: 'Matt Haig', datum: '2026-10-18', bild: '' },
+        { id: 'a2', titel: 'Beispiel: Kim Jiyoung, geboren 1982', autor: 'Cho Nam-joo', datum: '2026-12-13', bild: '' }
+      ],
+      termine: [{ id: 't1', datum: '2026-12-13', uhrzeit: '19:00', host: 'Anna', notiz: 'Beispiel: Glühwein!' }],
+      nichtgelesen: [{ id: 'n1', titel: 'Beispiel: Tomorrow, and Tomorrow, and Tomorrow', autor: 'Gabrielle Zevin' }]
     };
-  })();
-
-  function errText(e) {
-    var m = (e && e.message) || String(e);
-    return m.replace(/^Exception:\s*/, '').replace(/^Error:\s*/, '');
+    if (String(b.passwort).trim().toLowerCase() !== 'bookbees2026') throw new Error('Falsches Passwort.');
+    var save = function () { try { localStorage.setItem('bookbees_demo2', JSON.stringify(d)); } catch (e) {} };
+    switch (b.aktion) {
+      case 'login': return Object.assign({ absender: 'bookbees.beispiel@gmail.com', kontingent: 100 }, d);
+      case 'anmelden': d.mitglieder.push({ name: b.name, email: b.email.toLowerCase() }); save(); return d.mitglieder;
+      case 'entfernen': d.mitglieder = d.mitglieder.filter(function (m) { return m.email !== b.email; }); save(); return d.mitglieder;
+      case 'buchSenden': return { gesendet: b.emails.length, fehler: [], kontingent: 100 - b.emails.length };
+      case 'speichern':
+        var e = Object.assign({}, b.eintrag);
+        if (b.typ === 'archiv' && !e.titel) throw new Error('Bitte einen Titel eingeben.');
+        if (e.id) d[b.typ] = d[b.typ].map(function (x) { return x.id === e.id ? e : x; });
+        else { e.id = Math.random().toString(36).slice(2, 10); d[b.typ].push(e); }
+        save(); return d[b.typ];
+      case 'loeschen': d[b.typ] = d[b.typ].filter(function (x) { return x.id !== b.id; }); save(); return d[b.typ];
+    }
   }
+
+  function errText(e) { return String((e && e.message) || e).replace(/^(Exception|Error):\s*/, ''); }
+  function flash(node, text, isErr) { node.textContent = text; node.className = 'msg ' + (isErr ? 'err' : 'ok'); }
+
+  /* ---------- Datum ---------- */
+  function heute() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function toDate(s) { var p = s.split('-'); return new Date(+p[0], p[1] - 1, +p[2]); }
+  function fmtLang(s) { return toDate(s).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }); }
+  function fmtKurz(s) { return toDate(s).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' }); }
+
+  /* ---------- Menü ---------- */
+  function route() {
+    var v = location.hash.slice(1);
+    if (VIEWS.indexOf(v) < 0) v = 'teilen';
+    document.querySelectorAll('.view').forEach(function (n) { n.hidden = n.dataset.view !== v; });
+    document.querySelectorAll('#nav a').forEach(function (a) {
+      if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+  }
+  window.addEventListener('hashchange', route);
 
   /* ---------- Ansichten ---------- */
   function showApp(info) {
-    $('loginView').hidden = true;
-    $('appView').hidden = false;
+    state.mitglieder = info.mitglieder || [];
+    state.archiv = info.archiv || [];
+    state.termine = info.termine || [];
+    state.nichtgelesen = info.nichtgelesen || [];
     $('sender').textContent = info.absender || 'unbekannt';
     showQuota(info.kontingent);
-    setMembers(info.mitglieder);
+    $('loginView').hidden = true;
+    $('appView').hidden = false;
+    $('nav').hidden = false;
+    setMembers(state.mitglieder);
+    renderArchiv(); renderTermine(); renderNg();
+    route();
   }
-  function showQuota(n) {
-    $('quota').textContent = (typeof n === 'number') ? 'Heute noch ' + n + ' Mails möglich' : '';
-  }
+  function showQuota(n) { $('quota').textContent = (typeof n === 'number') ? 'Heute noch ' + n + ' Mails möglich' : ''; }
   function showLogin(msg) {
     $('appView').hidden = true;
+    $('nav').hidden = true;
     $('loginView').hidden = false;
     $('loginMsg').textContent = msg || '';
     $('pw').focus();
   }
 
+  /* Bearbeiten/Löschen-Knöpfe, mit Bestätigung im Eintrag selbst */
+  function actions(typ, eintrag, editor, rerender) {
+    var key = typ + ':' + eintrag.id;
+    if (pending === key) {
+      var c = el('span', 'confirm', 'Löschen?');
+      var yes = el('button', 'yes', 'Ja'); yes.type = 'button';
+      var no = el('button', '', 'Nein'); no.type = 'button';
+      yes.onclick = function () {
+        pending = null;
+        yes.disabled = true;
+        call('loeschen', { typ: typ, id: eintrag.id })
+          .then(function (l) { state[typ] = l; rerender(); })
+          .catch(function (e) { editor.error(errText(e)); rerender(); });
+      };
+      no.onclick = function () { pending = null; rerender(); };
+      c.appendChild(yes); c.appendChild(no);
+      return c;
+    }
+    var a = el('span', 'actions');
+    var ed = el('button', 'del', 'Bearbeiten'); ed.type = 'button';
+    ed.onclick = function () { editor.open(eintrag); };
+    var del = el('button', 'del danger', 'Löschen'); del.type = 'button';
+    del.onclick = function () { pending = key; rerender(); };
+    a.appendChild(ed); a.appendChild(del);
+    return a;
+  }
+
+  /* Gemeinsame Logik für die drei Formulare */
+  function editor(cfg) {
+    var form = $(cfg.form), neu = $(cfg.neu), title = $(cfg.form + 'Title');
+    var msg = form.querySelector('[data-msg]');
+    var submit = form.querySelector('button[type=submit]');
+    var editId = null;
+    function open(e) {
+      editId = e ? e.id : null;
+      form.reset();
+      msg.textContent = '';
+      cfg.fill(e || {});
+      title.textContent = e ? cfg.labelEdit : cfg.labelNew;
+      form.hidden = false;
+      neu.hidden = true;
+      form.querySelector('input').focus();
+      form.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+    function close() { form.hidden = true; neu.hidden = false; editId = null; form.reset(); }
+    neu.onclick = function () { open(null); };
+    form.querySelector('[data-cancel]').onclick = close;
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var e = cfg.read();
+      e.id = editId || '';
+      submit.disabled = true;
+      msg.className = 'msg'; msg.textContent = 'Wird gespeichert …';
+      call('speichern', { typ: cfg.typ, eintrag: e })
+        .then(function (l) { state[cfg.typ] = l; close(); cfg.render(); })
+        .catch(function (err) { flash(msg, errText(err), true); })
+        .then(function () { submit.disabled = false; });
+    });
+    return {
+      open: open,
+      error: function (t) { form.hidden = false; neu.hidden = true; flash(msg, t, true); }
+    };
+  }
+
+  /* ---------- Buch teilen ---------- */
   function setMembers(list) {
     var old = selected;
     selected = {};
-    members = list || [];
-    members.forEach(function (m) {
-      selected[m.email] = (m.email in old) ? old[m.email] : true;
-    });
-    render();
+    state.mitglieder = list || [];
+    state.mitglieder.forEach(function (m) { selected[m.email] = (m.email in old) ? old[m.email] : true; });
+    renderMembers();
+    renderHosts();
   }
 
-  function render() {
-    var ul = $('list');
+  function renderMembers() {
+    var ul = $('memberList');
     ul.textContent = '';
-    $('empty').hidden = members.length > 0;
-    members.forEach(function (m, i) {
-      var li = document.createElement('li');
-      var lab = document.createElement('label');
-      var cb = document.createElement('input');
-      cb.type = 'checkbox';
-      cb.id = 'm' + i;
-      cb.checked = !!selected[m.email];
+    $('memberEmpty').hidden = state.mitglieder.length > 0;
+    state.mitglieder.forEach(function (m, i) {
+      var li = el('li');
+      var lab = el('label');
+      var cb = el('input');
+      cb.type = 'checkbox'; cb.id = 'm' + i; cb.checked = !!selected[m.email];
       cb.addEventListener('change', function () { selected[m.email] = cb.checked; updateSend(); });
-      var who = document.createElement('span');
-      who.className = 'who';
-      var b = document.createElement('b'); b.textContent = m.name;
-      var s = document.createElement('span'); s.textContent = m.email;
-      who.appendChild(b); who.appendChild(s);
+      var who = el('span', 'who');
+      who.appendChild(el('b', '', m.name));
+      who.appendChild(el('span', '', m.email));
       lab.appendChild(cb); lab.appendChild(who);
       li.appendChild(lab);
-
-      if (pendingDelete === m.email) {
-        var c = document.createElement('span');
-        c.className = 'confirm';
-        c.appendChild(document.createTextNode('Entfernen?'));
-        var yes = document.createElement('button'); yes.className = 'yes'; yes.type = 'button'; yes.textContent = 'Ja';
-        var no = document.createElement('button'); no.type = 'button'; no.textContent = 'Nein';
-        yes.onclick = function () { remove(m.email); };
-        no.onclick = function () { pendingDelete = null; render(); };
+      var key = 'm:' + m.email;
+      if (pending === key) {
+        var c = el('span', 'confirm', 'Entfernen?');
+        var yes = el('button', 'yes', 'Ja'); yes.type = 'button';
+        var no = el('button', '', 'Nein'); no.type = 'button';
+        yes.onclick = function () {
+          pending = null;
+          call('entfernen', { email: m.email }).then(setMembers)
+            .catch(function (e) { flash($('sendMsg'), errText(e), true); });
+        };
+        no.onclick = function () { pending = null; renderMembers(); };
         c.appendChild(yes); c.appendChild(no);
         li.appendChild(c);
       } else {
-        var del = document.createElement('button');
-        del.className = 'del'; del.type = 'button'; del.textContent = 'Entfernen';
+        var del = el('button', 'del danger', 'Entfernen'); del.type = 'button';
         del.setAttribute('aria-label', m.name + ' entfernen');
-        del.onclick = function () { pendingDelete = m.email; render(); };
+        del.onclick = function () { pending = key; renderMembers(); };
         li.appendChild(del);
       }
       ul.appendChild(li);
@@ -407,11 +689,11 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     updateSend();
   }
 
-  function chosen() { return members.filter(function (m) { return selected[m.email]; }).map(function (m) { return m.email; }); }
+  function chosen() { return state.mitglieder.filter(function (m) { return selected[m.email]; }).map(function (m) { return m.email; }); }
 
   function updateSend() {
     var list = chosen();
-    $('count').textContent = list.length + ' von ' + members.length + ' ausgewählt';
+    $('count').textContent = list.length + ' von ' + state.mitglieder.length + ' ausgewählt';
     var f = $('file').files[0];
     var btn = $('sendBtn');
     btn.disabled = sending || !list.length || !f;
@@ -421,51 +703,28 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
         : 'Buch senden';
     }
   }
-  var sending = false;
-
-  function remove(email) {
-    pendingDelete = null;
-    call('entfernen', pw, email).then(function (l) { setMembers(l); })
-      .catch(function (e) { flash('sendMsg', errText(e), true); });
-  }
-
-  function flash(id, text, isErr) {
-    var el = $(id);
-    el.textContent = text;
-    el.className = 'msg ' + (isErr ? 'err' : 'ok');
-  }
-
-  /* ---------- Events ---------- */
-  $('loginForm').addEventListener('submit', function (ev) {
-    ev.preventDefault();
-    var p = $('pw').value;
-    $('loginMsg').textContent = 'Einen Moment …';
-    call('login', p).then(function (l) {
-      pw = p; store(KEY, p); showApp(l);
-    }).catch(function (e) { showLogin(errText(e)); });
-  });
 
   $('joinForm').addEventListener('submit', function (ev) {
     ev.preventDefault();
     var n = $('name').value, e = $('email').value;
     $('joinBtn').disabled = true;
-    call('anmelden', pw, n, e).then(function (l) {
+    call('anmelden', { name: n, email: e }).then(function (l) {
       setMembers(l);
-      selected[e.trim().toLowerCase()] = true; render();
-      flash('joinMsg', 'Eingetragen. Willkommen, ' + n.trim() + '!');
+      selected[e.trim().toLowerCase()] = true; renderMembers();
+      flash($('joinMsg'), 'Eingetragen. Willkommen, ' + n.trim() + '!');
       $('name').value = ''; $('email').value = '';
-    }).catch(function (err) { flash('joinMsg', errText(err), true); })
+    }).catch(function (err) { flash($('joinMsg'), errText(err), true); })
       .then(function () { $('joinBtn').disabled = false; });
   });
 
-  $('allBtn').onclick = function () { members.forEach(function (m) { selected[m.email] = true; }); render(); };
-  $('noneBtn').onclick = function () { members.forEach(function (m) { selected[m.email] = false; }); render(); };
+  $('allBtn').onclick = function () { state.mitglieder.forEach(function (m) { selected[m.email] = true; }); renderMembers(); };
+  $('noneBtn').onclick = function () { state.mitglieder.forEach(function (m) { selected[m.email] = false; }); renderMembers(); };
 
   $('file').addEventListener('change', function () {
     var f = $('file').files[0];
     $('sendMsg').textContent = '';
-    if (f && !/\.epub$/i.test(f.name)) flash('sendMsg', 'Das ist keine .epub-Datei.', true);
-    else if (f && f.size > 20 * 1024 * 1024) flash('sendMsg', 'Die Datei ist größer als 20 MB.', true);
+    if (f && !/\.epub$/i.test(f.name)) flash($('sendMsg'), 'Das ist keine .epub-Datei.', true);
+    else if (f && f.size > 20 * 1024 * 1024) flash($('sendMsg'), 'Die Datei ist größer als 20 MB.', true);
     updateSend();
   });
 
@@ -480,22 +739,22 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     $('sendMsg').className = 'msg';
     $('sendMsg').textContent = '„' + f.name + '“ geht an ' + list.length + ' Kindle. Das kann einen Moment dauern.';
     var reader = new FileReader();
-    reader.onerror = function () { done(); flash('sendMsg', 'Die Datei konnte nicht gelesen werden.', true); };
+    var done = function () { sending = false; updateSend(); };
+    reader.onerror = function () { done(); flash($('sendMsg'), 'Die Datei konnte nicht gelesen werden.', true); };
     reader.onload = function () {
       var base64 = String(reader.result).split(',')[1] || '';
-      call('buchSenden', pw, list, { name: f.name, base64: base64 }).then(function (r) {
+      call('buchSenden', { emails: list, datei: { name: f.name, base64: base64 } }).then(function (r) {
         showQuota(r.kontingent);
         if (r.fehler && r.fehler.length) {
-          flash('sendMsg', r.gesendet + ' gesendet. Nicht geklappt bei: ' + r.fehler.join(', '), true);
+          flash($('sendMsg'), r.gesendet + ' gesendet. Nicht geklappt bei: ' + r.fehler.join(', '), true);
         } else {
-          flash('sendMsg', 'Geschickt! „' + f.name + '“ ist an ' + r.gesendet + ' Kindle unterwegs.');
+          flash($('sendMsg'), 'Geschickt! „' + f.name + '“ ist an ' + r.gesendet + ' Kindle unterwegs.');
           $('file').value = '';
         }
-      }).catch(function (e) { flash('sendMsg', errText(e), true); })
+      }).catch(function (e) { flash($('sendMsg'), errText(e), true); })
         .then(done);
     };
     reader.readAsDataURL(f);
-    function done() { sending = false; updateSend(); }
   };
 
   $('copySender').onclick = function () {
@@ -510,6 +769,213 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     else fallback();
   };
 
+  /* ---------- Archiv ---------- */
+  var bildDaten = '';
+
+  function cover(b, big) {
+    if (b.bild) {
+      var img = el('img', 'cover' + (big ? ' big' : ''));
+      img.src = b.bild; img.alt = '';
+      return img;
+    }
+    return el('div', 'cover' + (big ? ' big' : ''), (b.titel || '?').trim().charAt(0).toUpperCase());
+  }
+
+  function setPreview() {
+    var box = $('a-preview');
+    box.textContent = '';
+    box.appendChild(cover({ bild: bildDaten, titel: $('a-titel').value || '?' }, false));
+    $('a-bild-weg').hidden = !bildDaten;
+  }
+
+  // Cover verkleinern, damit es in eine Tabellenzelle passt (unter 45 kB)
+  function bildVerkleinern(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        var max = 420, q = 0.82, out = '';
+        for (var tries = 0; tries < 8; tries++) {
+          var s = Math.min(1, max / Math.max(img.width, img.height));
+          var c = document.createElement('canvas');
+          c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          out = c.toDataURL('image/jpeg', q);
+          if (out.length < 45000) break;
+          if (q > 0.55) q -= 0.1; else max = Math.round(max * 0.8);
+        }
+        URL.revokeObjectURL(url);
+        out.length < 45000 ? resolve(out) : reject(new Error('Das Bild ist zu groß.'));
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); reject(new Error('Das Bild konnte nicht gelesen werden.')); };
+      img.src = url;
+    });
+  }
+
+  var archivEditor = editor({
+    typ: 'archiv', form: 'archivForm', neu: 'archivNeu',
+    labelNew: 'Buch eintragen', labelEdit: 'Buch bearbeiten',
+    fill: function (b) {
+      $('a-titel').value = b.titel || '';
+      $('a-autor').value = b.autor || '';
+      $('a-datum').value = b.datum || '';
+      bildDaten = b.bild || '';
+      setPreview();
+    },
+    read: function () {
+      return { titel: $('a-titel').value, autor: $('a-autor').value, datum: $('a-datum').value, bild: bildDaten };
+    },
+    render: function () { renderArchiv(); }
+  });
+
+  $('a-bild').addEventListener('change', function () {
+    var f = $('a-bild').files[0];
+    if (!f) return;
+    var msg = $('archivForm').querySelector('[data-msg]');
+    msg.className = 'msg'; msg.textContent = 'Cover wird vorbereitet …';
+    bildVerkleinern(f).then(function (d) { bildDaten = d; setPreview(); msg.textContent = ''; })
+      .catch(function (e) { flash(msg, errText(e), true); });
+  });
+  $('a-bild-weg').onclick = function () { bildDaten = ''; $('a-bild').value = ''; setPreview(); };
+  $('a-titel').addEventListener('input', function () { if (!bildDaten) setPreview(); });
+
+  function renderArchiv() {
+    var h = heute();
+    var aktuell = state.archiv.filter(function (b) { return b.datum && b.datum >= h; })
+      .sort(function (a, b) { return a.datum.localeCompare(b.datum); });
+    var gelesen = state.archiv.filter(function (b) { return !(b.datum && b.datum >= h); })
+      .sort(function (a, b) {
+        if (!a.datum) return 1;
+        if (!b.datum) return -1;
+        return b.datum.localeCompare(a.datum);
+      });
+
+    var cur = $('currentBooks');
+    cur.textContent = '';
+    aktuell.forEach(function (b, i) {
+      var box = el('section', 'current');
+      box.appendChild(cover(b, true));
+      var meta = el('div', 'meta');
+      meta.appendChild(el('span', 'pill', i === 0 ? 'Wir lesen gerade' : 'Danach'));
+      meta.appendChild(el('b', '', b.titel));
+      if (b.autor) meta.appendChild(el('span', '', b.autor));
+      meta.appendChild(el('div', 'when', 'Buchclub am ' + fmtLang(b.datum)));
+      meta.appendChild(actions('archiv', b, archivEditor, renderArchiv));
+      box.appendChild(meta);
+      cur.appendChild(box);
+    });
+
+    var ul = $('archivList');
+    ul.textContent = '';
+    gelesen.forEach(function (b) {
+      var li = el('li');
+      li.appendChild(cover(b, false));
+      var meta = el('div', 'meta');
+      meta.appendChild(el('b', '', b.titel));
+      var info = [b.autor, b.datum ? fmtKurz(b.datum) : ''].filter(Boolean).join(' · ');
+      if (info) meta.appendChild(el('span', '', info));
+      li.appendChild(meta);
+      li.appendChild(actions('archiv', b, archivEditor, renderArchiv));
+      ul.appendChild(li);
+    });
+    $('archivEmpty').hidden = gelesen.length > 0;
+    $('archivCount').textContent = gelesen.length ? gelesen.length + (gelesen.length === 1 ? ' Buch gelesen' : ' Bücher gelesen') : '';
+    $('archivCount').hidden = !gelesen.length;
+  }
+
+  /* ---------- Termine ---------- */
+  var termineEditor = editor({
+    typ: 'termine', form: 'termineForm', neu: 'termineNeu',
+    labelNew: 'Termin eintragen', labelEdit: 'Termin bearbeiten',
+    fill: function (t) {
+      $('t-datum').value = t.datum || '';
+      $('t-uhrzeit').value = t.uhrzeit || '';
+      $('t-host').value = t.host || '';
+      $('t-notiz').value = t.notiz || '';
+    },
+    read: function () {
+      return { datum: $('t-datum').value, uhrzeit: $('t-uhrzeit').value, host: $('t-host').value, notiz: $('t-notiz').value };
+    },
+    render: function () { renderTermine(); }
+  });
+
+  function renderHosts() {
+    var dl = $('hostList');
+    dl.textContent = '';
+    state.mitglieder.forEach(function (m) { var o = el('option'); o.value = m.name; dl.appendChild(o); });
+  }
+
+  function terminItem(t, next) {
+    var li = el('li', next ? 'next' : '');
+    var d = toDate(t.datum);
+    var block = el('div', 'dblock');
+    block.appendChild(el('b', '', String(d.getDate())));
+    block.appendChild(el('span', '', d.toLocaleDateString('de-DE', { month: 'short' }).replace('.', '') + (d.getFullYear() !== new Date().getFullYear() ? ' ' + String(d.getFullYear()).slice(2) : '')));
+    li.appendChild(block);
+    var meta = el('div', 'meta');
+    var wann = d.toLocaleDateString('de-DE', { weekday: 'long' }) + (t.uhrzeit ? ', ' + t.uhrzeit + ' Uhr' : '');
+    meta.appendChild(el('b', '', (next ? 'Nächster Termin · ' : '') + wann));
+    var info = [t.host ? 'Bei ' + t.host : '', t.notiz].filter(Boolean).join(' · ');
+    if (info) meta.appendChild(el('span', '', info));
+    li.appendChild(meta);
+    li.appendChild(actions('termine', t, termineEditor, renderTermine));
+    return li;
+  }
+
+  function renderTermine() {
+    var h = heute();
+    var kommend = state.termine.filter(function (t) { return t.datum >= h; })
+      .sort(function (a, b) { return (a.datum + a.uhrzeit).localeCompare(b.datum + b.uhrzeit); });
+    var alt = state.termine.filter(function (t) { return t.datum < h; })
+      .sort(function (a, b) { return b.datum.localeCompare(a.datum); });
+    var ul = $('termineList');
+    ul.textContent = '';
+    kommend.forEach(function (t, i) { ul.appendChild(terminItem(t, i === 0)); });
+    $('termineEmpty').hidden = kommend.length > 0;
+    var altUl = $('termineAlt');
+    altUl.textContent = '';
+    alt.forEach(function (t) { altUl.appendChild(terminItem(t, false)); });
+    $('termineAltBox').hidden = !alt.length;
+    $('termineAltTitle').textContent = 'Vergangene Termine (' + alt.length + ')';
+  }
+
+  /* ---------- Nicht gelesen ---------- */
+  var ngEditor = editor({
+    typ: 'nichtgelesen', form: 'ngForm', neu: 'ngNeu',
+    labelNew: 'Buch eintragen', labelEdit: 'Buch bearbeiten',
+    fill: function (b) { $('n-titel').value = b.titel || ''; $('n-autor').value = b.autor || ''; },
+    read: function () { return { titel: $('n-titel').value, autor: $('n-autor').value }; },
+    render: function () { renderNg(); }
+  });
+
+  function renderNg() {
+    var list = state.nichtgelesen.slice().sort(function (a, b) { return a.titel.localeCompare(b.titel, 'de'); });
+    var ul = $('ngList');
+    ul.textContent = '';
+    list.forEach(function (b) {
+      var li = el('li');
+      var meta = el('div', 'meta');
+      meta.appendChild(el('b', '', b.titel));
+      if (b.autor) meta.appendChild(el('span', '', b.autor));
+      li.appendChild(meta);
+      li.appendChild(actions('nichtgelesen', b, ngEditor, renderNg));
+      ul.appendChild(li);
+    });
+    $('ngEmpty').hidden = list.length > 0;
+    $('ngCount').textContent = list.length ? list.length + (list.length === 1 ? ' Buch' : ' Bücher') : '';
+    $('ngCount').hidden = !list.length;
+  }
+
+  /* ---------- Login ---------- */
+  $('loginForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var p = $('pw').value;
+    $('loginMsg').textContent = 'Einen Moment …';
+    call('login', null, p).then(function (info) {
+      pw = p; store(KEY, p); showApp(info);
+    }).catch(function (e) { showLogin(errText(e)); });
+  });
+
   $('logoutBtn').onclick = function () { pw = ''; store(KEY, null); $('pw').value = ''; showLogin(''); };
 
   /* ---------- Start ---------- */
@@ -517,7 +983,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   var saved = load(KEY);
   if (saved) {
     $('loginMsg').textContent = 'Einen Moment …';
-    call('login', saved).then(function (l) { pw = saved; showApp(l); })
+    call('login', null, saved).then(function (info) { pw = saved; showApp(info); })
       .catch(function () { store(KEY, null); showLogin(''); });
   }
 })();
