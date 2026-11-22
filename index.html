@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bookbee's</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: honigfarbenes Waben-Band oben, darunter eine schmale Spalte mit zwei Karten (Anmelden, Buch verschicken) */
+:root {
+  --bg: #fbfaf6;
+  --surface: #ffffff;
+  --ink: #1d1a14;
+  --muted: #6b6455;
+  --line: #e7e1d2;
+  --honey: #f2b416;
+  --honey-deep: #b77d00;
+  --honey-soft: #fdf1cf;
+  --on-honey: #1d1a14;
+  --danger: #b3261e;
+  --ok: #2f7d32;
+  --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15130f;
+    --surface: #1f1c16;
+    --ink: #f3eee2;
+    --muted: #a89f8b;
+    --line: #363126;
+    --honey: #f5be2e;
+    --honey-deep: #f5be2e;
+    --honey-soft: #2d2615;
+    --on-honey: #1d1a14;
+    --danger: #ff8a80;
+    --ok: #81c784;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font: 15px/1.55 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+.band {
+  background-color: var(--honey);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cpath d='M28 0 56 16v32L28 64 0 48V16zM28 64l28 16v32M28 64 0 80v32' fill='none' stroke='%23000' stroke-opacity='.08' stroke-width='2'/%3E%3C/svg%3E");
+  color: var(--on-honey);
+}
+.band-inner, main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.band-inner { padding-block: 36px 30px; display: flex; align-items: center; gap: 16px; }
+.logo { width: 52px; height: 52px; flex: none; }
+h1 {
+  font: 800 clamp(30px, 7vw, 42px)/1 var(--display);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.tag { margin: 4px 0 0; font-weight: 500; opacity: .8; }
+main { padding-block: 28px 56px; display: grid; gap: 20px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+}
+h2 { font: 700 21px/1.2 var(--display); margin: 0; text-wrap: balance; }
+.hint { color: var(--muted); margin: 0; font-size: 14px; }
+label { font-weight: 600; font-size: 13px; letter-spacing: .02em; display: grid; gap: 6px; }
+input[type=text], input[type=email], input[type=password] {
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 11px 12px;
+  width: 100%;
+}
+input:focus-visible, button:focus-visible, a:focus-visible {
+  outline: 3px solid var(--honey);
+  outline-offset: 2px;
+}
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.fields { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
+@media (max-width: 520px) { .fields { grid-template-columns: 1fr; } }
+.btn {
+  font: 600 15px/1 var(--body);
+  border-radius: 10px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-primary { background: var(--honey); color: var(--on-honey); }
+.btn-primary:hover { filter: brightness(.96); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { background: var(--honey-soft); }
+.btn[aria-disabled=true], .btn:disabled { opacity: .45; pointer-events: none; }
+.link { background: none; border: 0; padding: 0; font: inherit; color: var(--honey-deep); font-weight: 600; cursor: pointer; }
+.msg { font-size: 14px; margin: 0; min-height: 1.2em; }
+.msg.err { color: var(--danger); }
+.msg.ok { color: var(--ok); }
+
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.count { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 14px; }
+ul.members { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+ul.members li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 2px; border-bottom: 1px solid var(--line);
+}
+ul.members label { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; font-weight: 400; letter-spacing: 0; cursor: pointer; }
+ul.members input { width: 18px; height: 18px; accent-color: var(--honey-deep); flex: none; }
+.who { min-width: 0; }
+.who b { display: block; font-weight: 600; }
+.who span { display: block; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.del { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 13px; padding: 6px; border-radius: 6px; }
+.del:hover { color: var(--danger); background: var(--honey-soft); }
+.confirm { display: flex; gap: 6px; align-items: center; font-size: 13px; }
+.confirm button { font: 600 13px var(--body); border-radius: 6px; padding: 5px 9px; cursor: pointer; border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.confirm .yes { background: var(--danger); color: #fff; border-color: var(--danger); }
+.empty { color: var(--muted); padding: 18px 0 4px; margin: 0; }
+
+.tip {
+  background: var(--honey-soft);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+.tip b { font-weight: 600; }
+.addr {
+  font: 13px/1.5 ui-monospace, "SF Mono", Menlo, monospace;
+  background: var(--bg); border: 1px dashed var(--line);
+  border-radius: 8px; padding: 10px; overflow-wrap: anywhere; user-select: all;
+}
+input.file {
+  font: inherit; color: var(--ink); width: 100%;
+  border: 1px dashed var(--line); border-radius: 10px; padding: 12px; background: var(--bg);
+}
+input.file::file-selector-button {
+  font: 600 14px var(--body); border: 0; border-radius: 8px; padding: 8px 12px; margin-right: 10px;
+  background: var(--honey-soft); color: var(--ink); cursor: pointer;
+}
+.demo { background: var(--ink); color: var(--bg); text-align: center; font-size: 13px; padding: 6px 16px; }
+.login { max-width: 420px; margin: 0 auto; width: 100%; }
+footer { text-align: center; color: var(--muted); font-size: 13px; padding-bottom: 32px; }
+@media (prefers-reduced-motion: no-preference) {
+  .card { animation: rise .35s ease-out both; }
+  @keyframes rise { from { transform: translateY(6px); } to { transform: none; } }
+}
+</style>
+</head>
+<body>
+<div class="demo" id="demo" hidden>Vorschau-Modus: Daten werden nur in diesem Browser gespeichert.</div>
+<header class="band">
+  <div class="band-inner">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M32 3 57 17.5v29L32 61 7 46.5v-29z" fill="#1d1a14"/>
+      <ellipse cx="32" cy="36" rx="11" ry="13" fill="#f2b416"/>
+      <path d="M21.5 31h21M21 37h22M22.5 43h19" stroke="#1d1a14" stroke-width="3.2" stroke-linecap="round"/>
+      <ellipse cx="22" cy="21" rx="8" ry="5.5" fill="#fff" fill-opacity=".85" transform="rotate(-25 22 21)"/>
+      <ellipse cx="42" cy="21" rx="8" ry="5.5" fill="#fff" fill-opacity=".85" transform="rotate(25 42 21)"/>
+    </svg>
+    <div>
+      <h1>Bookbee's</h1>
+      <p class="tag">Unser Buchclub. Ein EPUB, alle Kindles.</p>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- Login -->
+  <section class="card login" id="loginView">
+    <h2>Willkommen im Bienenstock</h2>
+    <p class="hint">Gib das Club-Passwort ein, um die Mitgliederliste zu sehen.</p>
+    <form id="loginForm" class="row" autocomplete="off">
+      <label for="pw" style="flex:1;min-width:200px">Passwort
+        <input type="password" id="pw" required autocomplete="current-password">
+      </label>
+      <button class="btn btn-primary" type="submit" style="align-self:end">Einloggen</button>
+    </form>
+    <p class="msg err" id="loginMsg"></p>
+  </section>
+
+  <!-- App -->
+  <div id="appView" hidden style="display:grid;gap:20px">
+    <section class="card" aria-labelledby="joinTitle">
+      <h2 id="joinTitle">Ich bin dabei</h2>
+      <p class="hint">Trag deinen Namen und die E-Mail-Adresse deines Kindles ein (endet meist auf @kindle.com). Ist die Adresse schon drin, wird nur der Name aktualisiert.</p>
+      <form id="joinForm" style="display:grid;gap:12px">
+        <div class="fields">
+          <label for="name">Name
+            <input type="text" id="name" required maxlength="80" placeholder="z. B. Anna">
+          </label>
+          <label for="email">Kindle-E-Mail
+            <input type="email" id="email" required maxlength="120" placeholder="anna_123@kindle.com">
+          </label>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary" type="submit" id="joinBtn">Eintragen</button>
+          <p class="msg" id="joinMsg"></p>
+        </div>
+      </form>
+    </section>
+
+    <section class="card" aria-labelledby="sendTitle">
+      <h2 id="sendTitle">Buch an alle schicken</h2>
+      <div class="toolbar">
+        <div class="row" style="gap:14px">
+          <button class="link" type="button" id="allBtn">Alle auswählen</button>
+          <button class="link" type="button" id="noneBtn">Keine</button>
+        </div>
+        <span class="count" id="count">0 von 0 ausgewählt</span>
+      </div>
+      <ul class="members" id="list"></ul>
+      <p class="empty" id="empty" hidden>Noch niemand eingetragen. Sei die erste Biene!</p>
+
+      <label for="file">EPUB-Datei
+        <input type="file" id="file" accept=".epub,application/epub+zip" class="file">
+      </label>
+      <div class="row">
+        <button class="btn btn-primary" type="button" id="sendBtn" disabled>Buch senden</button>
+        <span class="count" id="quota"></span>
+      </div>
+      <p class="msg" id="sendMsg"></p>
+    </section>
+
+    <section class="card" aria-labelledby="kindleTitle">
+      <h2 id="kindleTitle">Einmalig: Absender beim Kindle freigeben</h2>
+      <p class="hint">Bücher kommen immer von dieser Adresse. Damit dein Kindle sie annimmt, trag sie einmal bei Amazon ein:</p>
+      <div class="row">
+        <div class="addr" id="sender" style="flex:1;min-width:0">…</div>
+        <button class="btn btn-ghost" type="button" id="copySender">Kopieren</button>
+      </div>
+      <p class="hint">Amazon-Konto → <i>Inhalte und Geräte → Einstellungen → Einstellungen für persönliche Dokumente → Genehmigte E-Mail-Adressen → Neue Adresse hinzufügen</i>.</p>
+    </section>
+
+    <footer><button class="link" type="button" id="logoutBtn">Ausloggen</button></footer>
+  </div>
+</main>
+
+<script>
+(function () {
+  var KEY = 'bookbees_pw';
+  // Adresse der Google-Apps-Script-Schnittstelle (Web-App-URL, endet auf /exec)
+  var API = 'https://script.google.com/macros/s/AKfycbyVQTzHpByOqolAxaCDaPaY2JTymz395t3kCWCvqkWdC7EZF9h3ljus7_-TJApe34gC/exec';
+  var IN_APPS_SCRIPT = typeof google !== 'undefined' && !!google.script;
+  var DEMO = /[?&]demo\b/.test(location.search);
+  var pw = '';
+  var members = [];
+  var selected = {};      // email -> true/false
+  var pendingDelete = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function store(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+
+  /* ---------- Server-Aufrufe (oder Vorschau-Ersatz) ---------- */
+  function call(fn) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    return new Promise(function (resolve, reject) {
+      if (DEMO) {
+        try { resolve(demoApi[fn].apply(null, args)); } catch (e) { reject(e); }
+        return;
+      }
+      if (IN_APPS_SCRIPT) {
+        var r = google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+        r[fn].apply(r, args);
+        return;
+      }
+      // Eigener Host: per fetch ohne Cookies an die Schnittstelle
+      var body = { aktion: fn, passwort: args[0] };
+      if (fn === 'anmelden') { body.name = args[1]; body.email = args[2]; }
+      if (fn === 'entfernen') { body.email = args[1]; }
+      if (fn === 'buchSenden') { body.emails = args[1]; body.datei = args[2]; }
+      fetch(API, {
+        method: 'POST',
+        credentials: 'omit',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body)
+      }).then(function (res) { return res.json(); })
+        .then(function (j) { j.ok ? resolve(j.daten) : reject(new Error(j.fehler)); })
+        .catch(function () { reject(new Error('Keine Verbindung zum Server. Bitte nochmal versuchen.')); });
+    });
+  }
+
+  var demoApi = (function () {
+    function get() { try { return JSON.parse(localStorage.getItem('bookbees_demo')) || null; } catch (e) { return null; } }
+    function put(l) { try { localStorage.setItem('bookbees_demo', JSON.stringify(l)); } catch (e) {} }
+    var mem = get() || [
+      { name: 'Beispiel: Anna', email: 'anna_beispiel@kindle.com' },
+      { name: 'Beispiel: Ben', email: 'ben.beispiel@kindle.com' }
+    ];
+    function check(p) { if (String(p).trim().toLowerCase() !== 'bookbees2026') throw new Error('Falsches Passwort.'); }
+    function sorted() { return mem.slice().sort(function (a, b) { return a.name.localeCompare(b.name, 'de'); }); }
+    return {
+      login: function (p) { check(p); return { mitglieder: sorted(), absender: 'bookbees.beispiel@gmail.com', kontingent: 100 }; },
+      buchSenden: function (p, emails, d) {
+        check(p);
+        if (!d || !/\.epub$/i.test(d.name)) throw new Error('Bitte eine .epub-Datei wählen.');
+        return { gesendet: emails.length, fehler: [], kontingent: 100 - emails.length };
+      },
+      anmelden: function (p, n, e) {
+        check(p); e = e.trim().toLowerCase();
+        var f = mem.filter(function (m) { return m.email === e; })[0];
+        if (f) f.name = n.trim(); else mem.push({ name: n.trim(), email: e });
+        put(mem); return sorted();
+      },
+      entfernen: function (p, e) { check(p); mem = mem.filter(function (m) { return m.email !== e; }); put(mem); return sorted(); }
+    };
+  })();
+
+  function errText(e) {
+    var m = (e && e.message) || String(e);
+    return m.replace(/^Exception:\s*/, '').replace(/^Error:\s*/, '');
+  }
+
+  /* ---------- Ansichten ---------- */
+  function showApp(info) {
+    $('loginView').hidden = true;
+    $('appView').hidden = false;
+    $('sender').textContent = info.absender || 'unbekannt';
+    showQuota(info.kontingent);
+    setMembers(info.mitglieder);
+  }
+  function showQuota(n) {
+    $('quota').textContent = (typeof n === 'number') ? 'Heute noch ' + n + ' Mails möglich' : '';
+  }
+  function showLogin(msg) {
+    $('appView').hidden = true;
+    $('loginView').hidden = false;
+    $('loginMsg').textContent = msg || '';
+    $('pw').focus();
+  }
+
+  function setMembers(list) {
+    var old = selected;
+    selected = {};
+    members = list || [];
+    members.forEach(function (m) {
+      selected[m.email] = (m.email in old) ? old[m.email] : true;
+    });
+    render();
+  }
+
+  function render() {
+    var ul = $('list');
+    ul.textContent = '';
+    $('empty').hidden = members.length > 0;
+    members.forEach(function (m, i) {
+      var li = document.createElement('li');
+      var lab = document.createElement('label');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'm' + i;
+      cb.checked = !!selected[m.email];
+      cb.addEventListener('change', function () { selected[m.email] = cb.checked; updateSend(); });
+      var who = document.createElement('span');
+      who.className = 'who';
+      var b = document.createElement('b'); b.textContent = m.name;
+      var s = document.createElement('span'); s.textContent = m.email;
+      who.appendChild(b); who.appendChild(s);
+      lab.appendChild(cb); lab.appendChild(who);
+      li.appendChild(lab);
+
+      if (pendingDelete === m.email) {
+        var c = document.createElement('span');
+        c.className = 'confirm';
+        c.appendChild(document.createTextNode('Entfernen?'));
+        var yes = document.createElement('button'); yes.className = 'yes'; yes.type = 'button'; yes.textContent = 'Ja';
+        var no = document.createElement('button'); no.type = 'button'; no.textContent = 'Nein';
+        yes.onclick = function () { remove(m.email); };
+        no.onclick = function () { pendingDelete = null; render(); };
+        c.appendChild(yes); c.appendChild(no);
+        li.appendChild(c);
+      } else {
+        var del = document.createElement('button');
+        del.className = 'del'; del.type = 'button'; del.textContent = 'Entfernen';
+        del.setAttribute('aria-label', m.name + ' entfernen');
+        del.onclick = function () { pendingDelete = m.email; render(); };
+        li.appendChild(del);
+      }
+      ul.appendChild(li);
+    });
+    updateSend();
+  }
+
+  function chosen() { return members.filter(function (m) { return selected[m.email]; }).map(function (m) { return m.email; }); }
+
+  function updateSend() {
+    var list = chosen();
+    $('count').textContent = list.length + ' von ' + members.length + ' ausgewählt';
+    var f = $('file').files[0];
+    var btn = $('sendBtn');
+    btn.disabled = sending || !list.length || !f;
+    if (!sending) {
+      btn.textContent = list.length
+        ? 'Buch an ' + list.length + (list.length === 1 ? ' Person' : ' Personen') + ' senden'
+        : 'Buch senden';
+    }
+  }
+  var sending = false;
+
+  function remove(email) {
+    pendingDelete = null;
+    call('entfernen', pw, email).then(function (l) { setMembers(l); })
+      .catch(function (e) { flash('sendMsg', errText(e), true); });
+  }
+
+  function flash(id, text, isErr) {
+    var el = $(id);
+    el.textContent = text;
+    el.className = 'msg ' + (isErr ? 'err' : 'ok');
+  }
+
+  /* ---------- Events ---------- */
+  $('loginForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var p = $('pw').value;
+    $('loginMsg').textContent = 'Einen Moment …';
+    call('login', p).then(function (l) {
+      pw = p; store(KEY, p); showApp(l);
+    }).catch(function (e) { showLogin(errText(e)); });
+  });
+
+  $('joinForm').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var n = $('name').value, e = $('email').value;
+    $('joinBtn').disabled = true;
+    call('anmelden', pw, n, e).then(function (l) {
+      setMembers(l);
+      selected[e.trim().toLowerCase()] = true; render();
+      flash('joinMsg', 'Eingetragen. Willkommen, ' + n.trim() + '!');
+      $('name').value = ''; $('email').value = '';
+    }).catch(function (err) { flash('joinMsg', errText(err), true); })
+      .then(function () { $('joinBtn').disabled = false; });
+  });
+
+  $('allBtn').onclick = function () { members.forEach(function (m) { selected[m.email] = true; }); render(); };
+  $('noneBtn').onclick = function () { members.forEach(function (m) { selected[m.email] = false; }); render(); };
+
+  $('file').addEventListener('change', function () {
+    var f = $('file').files[0];
+    $('sendMsg').textContent = '';
+    if (f && !/\.epub$/i.test(f.name)) flash('sendMsg', 'Das ist keine .epub-Datei.', true);
+    else if (f && f.size > 20 * 1024 * 1024) flash('sendMsg', 'Die Datei ist größer als 20 MB.', true);
+    updateSend();
+  });
+
+  $('sendBtn').onclick = function () {
+    var f = $('file').files[0];
+    var list = chosen();
+    if (!f || !list.length || sending) return;
+    if (!/\.epub$/i.test(f.name) || f.size > 20 * 1024 * 1024) return;
+    sending = true;
+    $('sendBtn').disabled = true;
+    $('sendBtn').textContent = 'Wird gesendet …';
+    $('sendMsg').className = 'msg';
+    $('sendMsg').textContent = '„' + f.name + '“ geht an ' + list.length + ' Kindle. Das kann einen Moment dauern.';
+    var reader = new FileReader();
+    reader.onerror = function () { done(); flash('sendMsg', 'Die Datei konnte nicht gelesen werden.', true); };
+    reader.onload = function () {
+      var base64 = String(reader.result).split(',')[1] || '';
+      call('buchSenden', pw, list, { name: f.name, base64: base64 }).then(function (r) {
+        showQuota(r.kontingent);
+        if (r.fehler && r.fehler.length) {
+          flash('sendMsg', r.gesendet + ' gesendet. Nicht geklappt bei: ' + r.fehler.join(', '), true);
+        } else {
+          flash('sendMsg', 'Geschickt! „' + f.name + '“ ist an ' + r.gesendet + ' Kindle unterwegs.');
+          $('file').value = '';
+        }
+      }).catch(function (e) { flash('sendMsg', errText(e), true); })
+        .then(done);
+    };
+    reader.readAsDataURL(f);
+    function done() { sending = false; updateSend(); }
+  };
+
+  $('copySender').onclick = function () {
+    var box = $('sender');
+    var ok = function () { $('copySender').textContent = 'Kopiert'; setTimeout(function () { $('copySender').textContent = 'Kopieren'; }, 1800); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(box);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      try { if (document.execCommand('copy')) ok(); } catch (e) {}
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(box.textContent).then(ok, fallback);
+    else fallback();
+  };
+
+  $('logoutBtn').onclick = function () { pw = ''; store(KEY, null); $('pw').value = ''; showLogin(''); };
+
+  /* ---------- Start ---------- */
+  if (DEMO) $('demo').hidden = false;
+  var saved = load(KEY);
+  if (saved) {
+    $('loginMsg').textContent = 'Einen Moment …';
+    call('login', saved).then(function (l) { pw = saved; showApp(l); })
+      .catch(function () { store(KEY, null); showLogin(''); });
+  }
+})();
+</script>
+</body>
+</html>
