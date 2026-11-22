@@ -202,7 +202,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   <div id="appView" hidden style="display:grid;gap:20px">
     <section class="card" aria-labelledby="joinTitle">
       <h2 id="joinTitle">Ich bin dabei</h2>
-      <p class="hint">Trag deinen Namen und die E-Mail-Adresse deines Kindles ein (endet meist auf @kindle.com). Ist die Adresse schon drin, wird nur der Name aktualisiert.</p>
+      <p class="hint">Trag deinen Namen und die E-Mail-Adresse deines Kindles ein (endet meist auf @kindle.com, steht bei <a class="link" href="https://www.amazon.de/hz/mycd/digital-console/alldevices?pageType=devices" target="_blank" rel="noopener">Amazon → Geräte</a>). Ist die Adresse schon drin, wird nur der Name aktualisiert.</p>
       <form id="joinForm" style="display:grid;gap:12px">
         <div class="fields">
           <label for="name">Name
@@ -248,7 +248,11 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
         <div class="addr" id="sender" style="flex:1;min-width:0">…</div>
         <button class="btn btn-ghost" type="button" id="copySender">Kopieren</button>
       </div>
-      <p class="hint">Amazon-Konto → <i>Inhalte und Geräte → Einstellungen → Einstellungen für persönliche Dokumente → Genehmigte E-Mail-Adressen → Neue Adresse hinzufügen</i>.</p>
+      <div class="row">
+        <a class="btn btn-primary" href="https://www.amazon.de/hz/mycd/preferences/myx#/home/settings/payment" target="_blank" rel="noopener">Amazon-Einstellungen öffnen</a>
+      </div>
+      <p class="hint">Dort nach unten zu <i>Einstellungen für persönliche Dokumente</i> scrollen, dann <i>Genehmigte E-Mail-Adressen → Neue Adresse hinzufügen</i> und die Adresse oben einfügen.</p>
+      <p class="hint">Deine Kindle-Adresse (für „Ich bin dabei“) findest du unter <a class="link" href="https://www.amazon.de/hz/mycd/digital-console/alldevices?pageType=devices" target="_blank" rel="noopener">Amazon → Geräte</a>: Kindle antippen, dort steht die E-Mail-Adresse.</p>
     </section>
 
     <footer><button class="link" type="button" id="logoutBtn">Ausloggen</button></footer>
