@@ -181,6 +181,17 @@ input.file::file-selector-button {
 form.editor { display: grid; gap: 12px; padding: 16px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); }
 .cover-edit { display: flex; gap: 14px; align-items: center; }
 
+/* Nicht gelesen: Zeile mit aufklappbaren Optionen */
+.ng-row { display: flex; align-items: center; gap: 12px; }
+.ng-row .meta { flex: 1; min-width: 0; }
+button.more {
+  font: 700 20px/1 var(--body); width: 40px; height: 36px; border: 0; border-radius: 8px;
+  background: var(--honey-soft); color: var(--ink); cursor: pointer; flex: none;
+}
+.ng-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
+ul.list > li.ng { display: block; }
+ul.list .ng-tools .actions { flex-direction: row; align-items: center; }
+
 /* Buchcover */
 .cover {
   width: 48px; aspect-ratio: 2 / 3; flex: none;
@@ -430,9 +441,15 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       <section class="card" aria-labelledby="ngTitle">
         <div class="head">
           <h2 id="ngTitle">Nicht gelesen</h2>
-          <button class="btn btn-ghost btn-small" type="button" id="ngNeu">+ Buch eintragen</button>
+          <span style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="btn btn-ghost btn-small" style="cursor:pointer">Datei importieren
+              <input type="file" id="ngImport" accept=".json,application/json" hidden>
+            </label>
+            <button class="btn btn-ghost btn-small" type="button" id="ngNeu">+ Buch eintragen</button>
+          </span>
         </div>
-        <p class="hint">Bücher, die zur Auswahl standen, aber (noch) nicht gewählt wurden.</p>
+        <p class="hint">Bücher, die zur Auswahl standen, aber (noch) nicht gewählt wurden. Mit „⋯“ lässt sich ein Buch als gelesen ins Archiv übernehmen.</p>
+        <p class="msg" id="ngImportMsg"></p>
         <form class="editor" id="ngForm" hidden>
           <h3 id="ngFormTitle">Buch eintragen</h3>
           <div class="fields even">
@@ -441,6 +458,14 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
             </label>
             <label for="n-autor">Autor:in
               <input type="text" id="n-autor" maxlength="200">
+            </label>
+          </div>
+          <div class="fields even">
+            <label for="n-datum">Abstimmung am
+              <input type="date" id="n-datum">
+            </label>
+            <label for="n-stimmen">Stimmen
+              <input type="number" id="n-stimmen" min="0" max="99" inputmode="numeric">
             </label>
           </div>
           <div class="row">
@@ -845,6 +870,8 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   });
   $('a-bild-weg').onclick = function () { bildDaten = ''; $('a-bild').value = ''; setPreview(); };
   $('a-titel').addEventListener('input', function () { if (!bildDaten) setPreview(); });
+  $('archivNeu').addEventListener('click', function () { uebernahme = null; });
+  $('archivForm').querySelector('[data-cancel]').addEventListener('click', function () { uebernahme = null; });
 
   function renderArchiv() {
     var h = heute();
@@ -888,51 +915,66 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     $('archivEmpty').hidden = gelesen.length > 0;
     $('archivCount').textContent = gelesen.length ? gelesen.length + (gelesen.length === 1 ? ' Buch gelesen' : ' Bücher gelesen') : '';
     $('archivCount').hidden = !gelesen.length;
+    uebernahmeAbschliessen();
   }
 
-  /* Archiv aus einer JSON-Datei importieren: {"archiv":[{titel, autor, datum, bild}, ...]} */
-  $('archivImport').addEventListener('change', function () {
-    var input = $('archivImport'), f = input.files[0], msg = $('archivImportMsg');
-    if (!f) return;
-    var reader = new FileReader();
-    reader.onerror = function () { flash(msg, 'Die Datei konnte nicht gelesen werden.', true); };
-    reader.onload = function () {
-      var liste;
-      try {
-        var j = JSON.parse(reader.result);
-        liste = Array.isArray(j) ? j : j.archiv;
-        if (!Array.isArray(liste)) throw new Error();
-      } catch (e) { flash(msg, 'Das ist keine gültige Import-Datei.', true); input.value = ''; return; }
+  /* Liste aus einer JSON-Datei importieren: {"<liste>":[{...}, ...]} */
+  function importer(cfg) {
+    $(cfg.input).addEventListener('change', function () {
+      var input = $(cfg.input), f = input.files[0], msg = $(cfg.msg);
+      if (!f) return;
+      var reader = new FileReader();
+      reader.onerror = function () { flash(msg, 'Die Datei konnte nicht gelesen werden.', true); };
+      reader.onload = function () {
+        var liste;
+        try {
+          var j = JSON.parse(reader.result);
+          liste = Array.isArray(j) ? j : j[cfg.typ];
+          if (!Array.isArray(liste)) throw new Error();
+        } catch (e) { flash(msg, 'Das ist keine gültige Import-Datei.', true); input.value = ''; return; }
 
-      var schluessel = function (b) { return String(b.titel || '').trim().toLowerCase() + '|' + (b.datum || ''); };
-      var vorhanden = {};
-      state.archiv.forEach(function (b) { vorhanden[schluessel(b)] = true; });
-      var neu = liste.filter(function (b) { return b && b.titel && !vorhanden[schluessel(b)]; });
-      var uebersprungen = liste.length - neu.length;
-      var ok = 0, fehler = [];
+        var schluessel = function (b) { return String(b.titel || '').trim().toLowerCase() + '|' + (cfg.datumImKey ? (b.datum || '') : ''); };
+        var vorhanden = {};
+        state[cfg.typ].forEach(function (b) { vorhanden[schluessel(b)] = true; });
+        var neu = liste.filter(function (b) { return b && b.titel && !vorhanden[schluessel(b)]; });
+        var uebersprungen = liste.length - neu.length;
+        var ok = 0, fehler = [], abbruch = false;
 
-      flash(msg, neu.length + ' Bücher werden eingetragen …', false);
-      var kette = Promise.resolve();
-      neu.forEach(function (b, i) {
-        kette = kette.then(function () {
-          flash(msg, 'Eintragen ' + (i + 1) + ' von ' + neu.length + ': ' + b.titel + ' …', false);
-          return call('speichern', {
-            typ: 'archiv',
-            eintrag: { id: '', titel: b.titel, autor: b.autor || '', datum: b.datum || '', bild: b.bild || '' }
-          }).then(function (l) { state.archiv = l; ok++; })
-            .catch(function (e) { fehler.push(b.titel + ' (' + errText(e) + ')'); });
+        flash(msg, neu.length + ' Bücher werden eingetragen …', false);
+        var kette = Promise.resolve();
+        neu.forEach(function (b, i) {
+          kette = kette.then(function () {
+            flash(msg, 'Eintragen ' + (i + 1) + ' von ' + neu.length + ': ' + b.titel + ' …', false);
+            var e = { id: '' };
+            cfg.felder.forEach(function (k) { e[k] = b[k] == null ? '' : b[k]; });
+            if (abbruch) return;
+            return call('speichern', { typ: cfg.typ, eintrag: e })
+              .then(function (l) {
+                state[cfg.typ] = l; ok++;
+                if (cfg.pflichtfeld && l.length && !(cfg.pflichtfeld in l[0])) abbruch = true;
+              })
+              .catch(function (err) { fehler.push(b.titel + ' (' + errText(err) + ')'); });
+          });
         });
-      });
-      kette.then(function () {
-        renderArchiv();
-        input.value = '';
-        var t = ok + ' eingetragen' + (uebersprungen ? ', ' + uebersprungen + ' schon vorhanden' : '') +
-          (fehler.length ? '. Fehler bei: ' + fehler.join('; ') : '.');
-        flash(msg, t, fehler.length > 0);
-      });
-    };
-    reader.readAsText(f);
-  });
+        kette.then(function () {
+          cfg.render();
+          input.value = '';
+          if (abbruch) {
+            flash(msg, 'Abgebrochen: Der Server kennt die neuen Felder noch nicht. Bitte zuerst Code.gs im Apps-Script-Projekt aktualisieren (siehe ANLEITUNG.md). Bisher eingetragen: ' + ok + '.', true);
+            return;
+          }
+          var t = ok + ' eingetragen' + (uebersprungen ? ', ' + uebersprungen + ' schon vorhanden' : '') +
+            (fehler.length ? '. Fehler bei: ' + fehler.join('; ') : '.');
+          flash(msg, t, fehler.length > 0);
+        });
+      };
+      reader.readAsText(f);
+    });
+  }
+  importer({ input: 'archivImport', msg: 'archivImportMsg', typ: 'archiv', datumImKey: true,
+    felder: ['titel', 'autor', 'datum', 'bild'], render: function () { renderArchiv(); } });
+  importer({ input: 'ngImport', msg: 'ngImportMsg', typ: 'nichtgelesen', datumImKey: false,
+    felder: ['titel', 'autor', 'datum', 'stimmen'], pflichtfeld: 'stimmen', render: function () { renderNg(); } });
 
   /* ---------- Termine ---------- */
   var termineEditor = editor({
@@ -994,22 +1036,74 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   var ngEditor = editor({
     typ: 'nichtgelesen', form: 'ngForm', neu: 'ngNeu',
     labelNew: 'Buch eintragen', labelEdit: 'Buch bearbeiten',
-    fill: function (b) { $('n-titel').value = b.titel || ''; $('n-autor').value = b.autor || ''; },
-    read: function () { return { titel: $('n-titel').value, autor: $('n-autor').value }; },
+    fill: function (b) {
+      $('n-titel').value = b.titel || ''; $('n-autor').value = b.autor || '';
+      $('n-datum').value = b.datum || ''; $('n-stimmen').value = b.stimmen || '';
+    },
+    read: function () {
+      return { titel: $('n-titel').value, autor: $('n-autor').value, datum: $('n-datum').value, stimmen: $('n-stimmen').value };
+    },
     render: function () { renderNg(); }
   });
 
+  var ngOffen = null;        // id der aufgeklappten Zeile
+  var uebernahme = null;     // Buch, das gerade als gelesen übernommen wird
+
+  // Buch aus „Nicht gelesen“ ins Archiv übernehmen: Archiv-Formular vorausgefüllt, nach dem Speichern wird es hier entfernt
+  function alsGelesen(b) {
+    uebernahme = b;
+    location.hash = '#archiv';
+    archivEditor.open({ titel: b.titel, autor: b.autor || '', datum: '', bild: '' });
+    $('a-datum').focus();
+  }
+  function uebernahmeAbschliessen() {
+    if (!uebernahme) return;
+    var u = uebernahme;
+    var drin = state.archiv.some(function (a) {
+      return String(a.titel).trim().toLowerCase() === String(u.titel).trim().toLowerCase() && a.datum;
+    });
+    if (!drin) return;
+    uebernahme = null;
+    call('loeschen', { typ: 'nichtgelesen', id: u.id })
+      .then(function (l) { state.nichtgelesen = l; renderNg(); })
+      .catch(function (e) { ngEditor.error(errText(e)); });
+  }
+
   function renderNg() {
-    var list = state.nichtgelesen.slice().sort(function (a, b) { return a.titel.localeCompare(b.titel, 'de'); });
+    var list = state.nichtgelesen.slice().sort(function (a, b) {
+      var d = (parseInt(b.stimmen, 10) || 0) - (parseInt(a.stimmen, 10) || 0);
+      return d || a.titel.localeCompare(b.titel, 'de');
+    });
     var ul = $('ngList');
     ul.textContent = '';
     list.forEach(function (b) {
-      var li = el('li');
+      var li = el('li', 'ng');
+      var kopf = el('div', 'ng-row');
       var meta = el('div', 'meta');
       meta.appendChild(el('b', '', b.titel));
-      if (b.autor) meta.appendChild(el('span', '', b.autor));
-      li.appendChild(meta);
-      li.appendChild(actions('nichtgelesen', b, ngEditor, renderNg));
+      var n = parseInt(b.stimmen, 10);
+      var info = [b.autor,
+        b.stimmen !== '' && b.stimmen != null && !isNaN(n) ? n + (n === 1 ? ' Stimme' : ' Stimmen') : '',
+        b.datum ? 'Abstimmung ' + fmtKurz(b.datum) : ''].filter(Boolean).join(' · ');
+      if (info) meta.appendChild(el('span', '', info));
+      kopf.appendChild(meta);
+      var open = ngOffen === b.id || pending === 'nichtgelesen:' + b.id;
+      var more = el('button', 'more', '⋯');
+      more.type = 'button';
+      more.setAttribute('aria-label', 'Mehr Optionen für ' + b.titel);
+      more.setAttribute('aria-expanded', open ? 'true' : 'false');
+      more.onclick = function () { ngOffen = open ? null : b.id; pending = null; renderNg(); };
+      kopf.appendChild(more);
+      li.appendChild(kopf);
+      if (open) {
+        var tools = el('div', 'ng-tools');
+        var gel = el('button', 'btn btn-primary btn-small', 'Als gelesen übernehmen');
+        gel.type = 'button';
+        gel.onclick = function () { alsGelesen(b); };
+        tools.appendChild(gel);
+        tools.appendChild(actions('nichtgelesen', b, ngEditor, renderNg));
+        li.appendChild(tools);
+      }
       ul.appendChild(li);
     });
     $('ngEmpty').hidden = list.length > 0;
