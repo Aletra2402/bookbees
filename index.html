@@ -954,6 +954,20 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
         var uebersprungen = liste.length - neu.length;
         var ok = 0, fehler = [], abbruch = false;
 
+        // Bei Verbindungsproblemen (z. B. Handy-Netz): prüfen, ob der Eintrag trotzdem angekommen ist, sonst nochmal versuchen
+        function speichere(e, versuch) {
+          return call('speichern', { typ: cfg.typ, eintrag: e }).catch(function (err) {
+            if (versuch >= 3) throw err;
+            return new Promise(function (r) { setTimeout(r, 1500 * (versuch + 1)); })
+              .then(function () { return call('login'); })
+              .then(function (info) {
+                var l = info[cfg.typ] || [];
+                var da = l.some(function (x) { return schluessel(x) === schluessel(e); });
+                return da ? l : speichere(e, versuch + 1);
+              }, function () { return speichere(e, versuch + 1); });
+          });
+        }
+
         flash(msg, neu.length + ' Bücher werden eingetragen …', false);
         var kette = Promise.resolve();
         neu.forEach(function (b, i) {
@@ -962,7 +976,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
             var e = { id: '' };
             cfg.felder.forEach(function (k) { e[k] = b[k] == null ? '' : b[k]; });
             if (abbruch) return;
-            return call('speichern', { typ: cfg.typ, eintrag: e })
+            return speichere(e, 0)
               .then(function (l) {
                 state[cfg.typ] = l; ok++;
                 if (cfg.pflichtfeld && l.length && !(cfg.pflichtfeld in l[0])) abbruch = true;
