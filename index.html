@@ -341,8 +341,14 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       <section class="card" aria-labelledby="archivTitle">
         <div class="head">
           <h2 id="archivTitle">Archiv</h2>
-          <button class="btn btn-ghost btn-small" type="button" id="archivNeu">+ Buch eintragen</button>
+          <span style="display:flex;gap:8px;flex-wrap:wrap">
+            <label class="btn btn-ghost btn-small" style="cursor:pointer">Datei importieren
+              <input type="file" id="archivImport" accept=".json,application/json" hidden>
+            </label>
+            <button class="btn btn-ghost btn-small" type="button" id="archivNeu">+ Buch eintragen</button>
+          </span>
         </div>
+        <p class="msg" id="archivImportMsg"></p>
         <form class="editor" id="archivForm" hidden>
           <h3 id="archivFormTitle">Buch eintragen</h3>
           <div class="fields even">
@@ -883,6 +889,50 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     $('archivCount').textContent = gelesen.length ? gelesen.length + (gelesen.length === 1 ? ' Buch gelesen' : ' Bücher gelesen') : '';
     $('archivCount').hidden = !gelesen.length;
   }
+
+  /* Archiv aus einer JSON-Datei importieren: {"archiv":[{titel, autor, datum, bild}, ...]} */
+  $('archivImport').addEventListener('change', function () {
+    var input = $('archivImport'), f = input.files[0], msg = $('archivImportMsg');
+    if (!f) return;
+    var reader = new FileReader();
+    reader.onerror = function () { flash(msg, 'Die Datei konnte nicht gelesen werden.', true); };
+    reader.onload = function () {
+      var liste;
+      try {
+        var j = JSON.parse(reader.result);
+        liste = Array.isArray(j) ? j : j.archiv;
+        if (!Array.isArray(liste)) throw new Error();
+      } catch (e) { flash(msg, 'Das ist keine gültige Import-Datei.', true); input.value = ''; return; }
+
+      var schluessel = function (b) { return String(b.titel || '').trim().toLowerCase() + '|' + (b.datum || ''); };
+      var vorhanden = {};
+      state.archiv.forEach(function (b) { vorhanden[schluessel(b)] = true; });
+      var neu = liste.filter(function (b) { return b && b.titel && !vorhanden[schluessel(b)]; });
+      var uebersprungen = liste.length - neu.length;
+      var ok = 0, fehler = [];
+
+      flash(msg, neu.length + ' Bücher werden eingetragen …', false);
+      var kette = Promise.resolve();
+      neu.forEach(function (b, i) {
+        kette = kette.then(function () {
+          flash(msg, 'Eintragen ' + (i + 1) + ' von ' + neu.length + ': ' + b.titel + ' …', false);
+          return call('speichern', {
+            typ: 'archiv',
+            eintrag: { id: '', titel: b.titel, autor: b.autor || '', datum: b.datum || '', bild: b.bild || '' }
+          }).then(function (l) { state.archiv = l; ok++; })
+            .catch(function (e) { fehler.push(b.titel + ' (' + errText(e) + ')'); });
+        });
+      });
+      kette.then(function () {
+        renderArchiv();
+        input.value = '';
+        var t = ok + ' eingetragen' + (uebersprungen ? ', ' + uebersprungen + ' schon vorhanden' : '') +
+          (fehler.length ? '. Fehler bei: ' + fehler.join('; ') : '.');
+        flash(msg, t, fehler.length > 0);
+      });
+    };
+    reader.readAsText(f);
+  });
 
   /* ---------- Termine ---------- */
   var termineEditor = editor({
