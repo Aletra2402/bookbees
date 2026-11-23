@@ -97,7 +97,7 @@ h2 { font: 700 21px/1.2 var(--display); margin: 0; text-wrap: balance; }
 h3 { font: 700 17px/1.25 var(--display); margin: 0; }
 .hint { color: var(--muted); margin: 0; font-size: 14px; }
 label { font-weight: 600; font-size: 13px; letter-spacing: .02em; display: grid; gap: 6px; }
-input[type=text], input[type=email], input[type=password], input[type=date], input[type=time] {
+input[type=text], input[type=email], input[type=password], input[type=date], input[type=time], input[type=search], input[type=number] {
   font: inherit;
   color: var(--ink);
   background: var(--bg);
@@ -191,6 +191,10 @@ button.more {
 .ng-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; }
 ul.list > li.ng { display: block; }
 ul.list .ng-tools .actions { flex-direction: row; align-items: center; }
+
+input.search { width: 100%; margin: 4px 0 10px; }
+.ng-datum { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); letter-spacing: 0; font-weight: 400; }
+.ng-datum input { width: auto; }
 
 /* Buchcover */
 .cover {
@@ -389,6 +393,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
             <p class="msg" data-msg></p>
           </div>
         </form>
+        <input type="search" class="search" id="archivSuche" placeholder="Archiv durchsuchen (Titel, Autor)" aria-label="Archiv durchsuchen">
         <span class="count" id="archivCount"></span>
         <ul class="list" id="archivList"></ul>
         <p class="empty" id="archivEmpty" hidden>Noch keine Bücher im Archiv. Trag das erste ein!</p>
@@ -474,6 +479,7 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
             <p class="msg" data-msg></p>
           </div>
         </form>
+        <input type="search" class="search" id="ngSuche" placeholder="Suchen (Titel, Autor)" aria-label="Nicht gelesen durchsuchen">
         <span class="count" id="ngCount"></span>
         <ul class="list" id="ngList"></ul>
         <p class="empty" id="ngEmpty" hidden>Noch nichts eingetragen.</p>
@@ -801,6 +807,10 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
     else fallback();
   };
 
+  /* ---------- Suche ---------- */
+  function norm(t) { return String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  function trifft(b, q) { q = norm(q).trim(); return !q || norm(b.titel + ' ' + (b.autor || '')).indexOf(q) >= 0; }
+
   /* ---------- Archiv ---------- */
   var bildDaten = '';
 
@@ -870,8 +880,6 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   });
   $('a-bild-weg').onclick = function () { bildDaten = ''; $('a-bild').value = ''; setPreview(); };
   $('a-titel').addEventListener('input', function () { if (!bildDaten) setPreview(); });
-  $('archivNeu').addEventListener('click', function () { uebernahme = null; });
-  $('archivForm').querySelector('[data-cancel]').addEventListener('click', function () { uebernahme = null; });
 
   function renderArchiv() {
     var h = heute();
@@ -899,6 +907,9 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       cur.appendChild(box);
     });
 
+    var alle = gelesen.length;
+    var q = $('archivSuche').value;
+    gelesen = gelesen.filter(function (b) { return trifft(b, q); });
     var ul = $('archivList');
     ul.textContent = '';
     gelesen.forEach(function (b) {
@@ -913,9 +924,12 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       ul.appendChild(li);
     });
     $('archivEmpty').hidden = gelesen.length > 0;
-    $('archivCount').textContent = gelesen.length ? gelesen.length + (gelesen.length === 1 ? ' Buch gelesen' : ' Bücher gelesen') : '';
-    $('archivCount').hidden = !gelesen.length;
-    uebernahmeAbschliessen();
+    $('archivEmpty').textContent = alle ? 'Nichts gefunden.' : 'Noch keine Bücher im Archiv. Trag das erste ein!';
+    var suche = q.trim() !== '';
+    $('archivCount').textContent = !alle ? '' : suche
+      ? gelesen.length + ' von ' + alle + ' gefunden'
+      : alle + (alle === 1 ? ' Buch gelesen' : ' Bücher gelesen');
+    $('archivCount').hidden = !alle;
   }
 
   /* Liste aus einer JSON-Datei importieren: {"<liste>":[{...}, ...]} */
@@ -1047,26 +1061,21 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
   });
 
   var ngOffen = null;        // id der aufgeklappten Zeile
-  var uebernahme = null;     // Buch, das gerade als gelesen übernommen wird
 
-  // Buch aus „Nicht gelesen“ ins Archiv übernehmen: Archiv-Formular vorausgefüllt, nach dem Speichern wird es hier entfernt
-  function alsGelesen(b) {
-    uebernahme = b;
-    location.hash = '#archiv';
-    archivEditor.open({ titel: b.titel, autor: b.autor || '', datum: '', bild: '' });
-    $('a-datum').focus();
-  }
-  function uebernahmeAbschliessen() {
-    if (!uebernahme) return;
-    var u = uebernahme;
-    var drin = state.archiv.some(function (a) {
-      return String(a.titel).trim().toLowerCase() === String(u.titel).trim().toLowerCase() && a.datum;
-    });
-    if (!drin) return;
-    uebernahme = null;
-    call('loeschen', { typ: 'nichtgelesen', id: u.id })
-      .then(function (l) { state.nichtgelesen = l; renderNg(); })
-      .catch(function (e) { ngEditor.error(errText(e)); });
+  // Buch aus „Nicht gelesen“ mit Datum ins Archiv übernehmen und hier entfernen
+  function alsGelesen(b, datum, knopf) {
+    var msg = $('ngImportMsg');
+    if (!datum) { flash(msg, 'Bitte zuerst das Datum des Buchclubs eintragen.', true); return; }
+    knopf.disabled = true;
+    flash(msg, 'Wird ins Archiv übernommen …', false);
+    call('speichern', { typ: 'archiv', eintrag: { id: '', titel: b.titel, autor: b.autor || '', datum: datum, bild: '' } })
+      .then(function (l) { state.archiv = l; return call('loeschen', { typ: 'nichtgelesen', id: b.id }); })
+      .then(function (l) {
+        state.nichtgelesen = l; ngOffen = null;
+        renderNg(); renderArchiv();
+        flash(msg, '„' + b.titel + '“ ist jetzt im Archiv.', false);
+      })
+      .catch(function (e) { knopf.disabled = false; flash(msg, errText(e), true); });
   }
 
   function renderNg() {
@@ -1074,6 +1083,9 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       var d = (parseInt(b.stimmen, 10) || 0) - (parseInt(a.stimmen, 10) || 0);
       return d || a.titel.localeCompare(b.titel, 'de');
     });
+    var alleNg = list.length;
+    var qn = $('ngSuche').value;
+    list = list.filter(function (b) { return trifft(b, qn); });
     var ul = $('ngList');
     ul.textContent = '';
     list.forEach(function (b) {
@@ -1097,9 +1109,14 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       li.appendChild(kopf);
       if (open) {
         var tools = el('div', 'ng-tools');
-        var gel = el('button', 'btn btn-primary btn-small', 'Als gelesen übernehmen');
+        var dat = el('input'); dat.type = 'date'; dat.id = 'ng-datum-' + b.id;
+        dat.setAttribute('aria-label', 'Datum des Buchclubs');
+        var gel = el('button', 'btn btn-primary btn-small', 'Als gelesen ins Archiv');
         gel.type = 'button';
-        gel.onclick = function () { alsGelesen(b); };
+        gel.onclick = function () { alsGelesen(b, dat.value, gel); };
+        var lbl = el('label', 'ng-datum', 'Buchclub am');
+        lbl.appendChild(dat);
+        tools.appendChild(lbl);
         tools.appendChild(gel);
         tools.appendChild(actions('nichtgelesen', b, ngEditor, renderNg));
         li.appendChild(tools);
@@ -1107,9 +1124,15 @@ footer { text-align: center; color: var(--muted); font-size: 13px; padding-botto
       ul.appendChild(li);
     });
     $('ngEmpty').hidden = list.length > 0;
-    $('ngCount').textContent = list.length ? list.length + (list.length === 1 ? ' Buch' : ' Bücher') : '';
-    $('ngCount').hidden = !list.length;
+    $('ngEmpty').textContent = alleNg ? 'Nichts gefunden.' : 'Noch nichts eingetragen.';
+    $('ngCount').textContent = !alleNg ? '' : qn.trim() !== ''
+      ? list.length + ' von ' + alleNg + ' gefunden'
+      : alleNg + (alleNg === 1 ? ' Buch' : ' Bücher');
+    $('ngCount').hidden = !alleNg;
   }
+
+  $('archivSuche').addEventListener('input', function () { renderArchiv(); });
+  $('ngSuche').addEventListener('input', function () { renderNg(); });
 
   /* ---------- Login ---------- */
   $('loginForm').addEventListener('submit', function (ev) {
